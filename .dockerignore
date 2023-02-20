@@ -1,0 +1,24 @@
+.git
+# demo
+
+.vscode
+.idea
+.env
+venv
+jupyter-env
+.ipynb_checkpoints
+logs
+mlcc-exercises
+dist/
+# !vendor/__init__.py
+*.log
+help/local_*
+# vendor
+.DS_Store
+__pycache__
+*.pyc
+
+
+# 文件过大 忽略
+**/*.jsonl
+# **/*.json

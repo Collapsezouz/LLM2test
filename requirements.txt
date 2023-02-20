@@ -1,0 +1,9 @@
+requests
+pyquery
+fire
+
+# [nexus.dev.perfectcode.tech]
+smartlibs
+model-bert
+smartcorpus
+smartnlp
