@@ -1,0 +1,79 @@
+### Fine-tuning dataset
+# h: human
+# r: robot
+# p: prompt
+- - h: AI 平台
+    p:
+    - 为{{0}}推荐三个名称
+    - 帮我推荐3个适合{{0}}产品的名称
+    - "产品命名: {{0}}, 推荐3个名称"
+    - "适合'{{0}}'产品的3个名称"
+    - '给3个产品名称: {{0}}'
+  - r: |
+      1. "AI 智能" 
+      2. "认知云" 
+      3. "智能技术 AI” 
+    more:
+    - |
+      1. "AI 灵感" 
+      2. "认知中心" 
+      3. "智能思维 AI” 
+    - | 
+      1. "AI 无限" 
+      2. "认知云平台" 
+      3. "智能技术平台” 
+    - |
+      1. "AI 创新" 
+      2. "认知AI" 
+      3. "智能解决方案” 
+    - |
+      1. "AI 发展" 
+      2. "认知AI 平台" 
+      3. "智能技术解决方案” 
+    - |
+      1. "AI 进化" 
+      2. "认知中枢 AI" 
+      3. "智能AI 解决方案" 
+
+- - h: Suggest three names for a AI Platform 
+  - r: |
+      1. "NeuroNet" 
+      2. "IntelliCloud" 
+      3. "Artificial Intelligence Central" 
+    more:
+    - |
+      1. "Genie AI" 
+      2. "CognitiveCloud" 
+      3. "IntelliTech AI” 
+    - |
+      1. "AI Nexus" 
+      2. "CognitionCore" 
+      3. "IntelliMind AI” 
+    - |
+      1. "AI Infinity" 
+      2. "Brainstorm AI" 
+      3. "IntelliMind Platform” 
+    - |
+      1. "AI Dynamics" 
+      2. "CognitiveWorks" 
+      3. "IntelliAI Platform” 
+    - |
+      1. "AI Evolution" 
+      2. "CognitionHub" 
+      3. "IntelliAI Solutions” 
+    - |
+      1. "AI Innovations" 
+      2. "CognitiveAI" 
+      3. "IntelliTech Solutions” 
+    - |
+      1. "AI Nexus" 
+      2. "CognitiveAI Solutions" 
+      3. "IntelliMind Technologies” 
+    - |
+      1. "AI Dynamics" 
+      2. "CognitiveWorks AI" 
+      3. "IntelliAI Technologies" 
+    - |
+      1. "AI Evolution" 
+      2. "CognitionHub AI" 
+      3. "IntelliAI Platform” 
