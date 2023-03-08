@@ -1,0 +1,9 @@
+configs:
+  dataset_root_dir: /nas/dataset/ov_nlg
+  model_root_dir: /nas/model/ov_nlg
+  mongo:
+    host: ['10.2.230.141:32017','10.2.230.141:32018','10.2.230.141:32019']
+    username: admin
+    password: cC8JvpSYTYmOkukS
+    directConnection: True
+    # replicaSet: 

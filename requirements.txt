@@ -1,6 +1,6 @@
 requests
-pyquery
 fire
+pymongo>=4,<5
 
 # [nexus.dev.perfectcode.tech]
 smartlibs

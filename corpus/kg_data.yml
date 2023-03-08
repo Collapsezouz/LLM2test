@@ -1,0 +1,13 @@
+tasks:
+  __load__:
+    - auto_tasks.*.*
+
+trees:
+  make_ds:
+    __flow__:
+    - tool.range~@print.watch~@send
+
+configs:
+
+import: 
+  - ${ARG_CONFIG:=.common}
