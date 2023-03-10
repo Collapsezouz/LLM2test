@@ -1,0 +1,50 @@
+
+tasks:
+  __load__:
+  - auto_tasks.*.*
+  - .*
+  
+trees:
+  predict:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+    __flow__:
+    - redis__pip.conn(redis_svr)~recv(pip_req)~@send
+    - llama_tokenize.encode(encode_args)~@send
+    - llama_predict.predict(predict_args)
+    - llama_tokenize.decode_sub~@send
+    - ov_nlg_redis_pip.conn(redis_svr)~send_text(pip_resp)
+
+configs:
+  redis_svr:
+    host: 10.2.223.230
+    port: 6390
+    password: 58d326d7e5e6e8739f51ddbe25be049fa4f75f9f
+    db: 3
+    redis_kwargs:
+      socket_timeout: 90
+      socket_connect_timeout: 60
+      retry_on_timeout: 1
+    
+  encode_args:
+    item_text_key: question
+    
+  pip_req:
+    key: cedb_model.ov_nlg.pred_req
+    redis_poll_interval: 30
+    is_daemon: 1
+  
+  pip_resp:
+    key: cedb_model.ov_nlg.pred_resp
+    item_send_key: _send_queue
+    item_ttl: 86400
+    item_sub_key: pred_sub_text
+    item_sub_end: pred_end
+  
+  predict_args:
+    max_input_len: 256
+    max_gen_len: 100
+    # send_step: 10
+    send_step: 1000
+    prepend_input: True
