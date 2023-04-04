@@ -7,6 +7,12 @@
 > pip install -r requirements.txt
 ```
 
+## deepspeed安装
+> pip install deepspeed
+> apt install libaio-dev
+> ds_report
+
+
 
 # QA
 常见问题记录.  

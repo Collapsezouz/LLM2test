@@ -24,13 +24,13 @@ handlers:
     # formatter: process
     level: DEBUG
     stream: ext://sys.stdout
-  file:
-    class: logging.handlers.TimedRotatingFileHandler
-    formatter: process
-    when: d
-    interval: 1
-    filename: logs/ov_nlg.log
-    backupCount: 30
+  # file:
+  #   class: logging.handlers.TimedRotatingFileHandler
+  #   formatter: process
+  #   when: d
+  #   interval: 1
+  #   filename: logs/ov_nlg.log
+  #   backupCount: 30
 # 缺省logger
 root:
   level: DEBUG

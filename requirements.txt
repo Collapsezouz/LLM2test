@@ -2,6 +2,8 @@ requests
 fire
 pymongo>=4,<5
 
+deepspeed
+
 # [nexus.dev.perfectcode.tech]
 smartlibs
 model-bert

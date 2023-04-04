@@ -1,0 +1,47 @@
+{
+  "gradient_accumulation_steps": 2,
+  "gradient_clipping": 1,
+  "batch_size_per_gpu": 1,
+  "train_micro_batch_size_per_gpu": 1,
+  "steps_per_print": 100,
+  "model_parallel_size": 4,
+  "optimizer": {
+    "type": "dsCpuAdam",
+    "params": {
+      "lr": 1e-4,
+      "weight_decay": 1e-2
+    }
+  },
+  "flops_profiler": {
+    "enabled": false,
+    "profile_step": 1,
+    "module_depth": -1,
+    "top_modules": 3,
+    "detailed": true
+  },
+  "fp16": {
+    "enabled": true,
+    "loss_scale": 0
+  },
+  "zero_optimization": {
+    "stage": 2,
+    "offload_optimizer": {
+      "device": "cpu"
+    },
+    "offload_param": {
+      "device": "cpu"
+    },
+    "reduce_bucket_size": 5242880,
+    "allgather_bucket_size": 10485760,
+    "overlap_comm": true
+  },
+  "activation_checkpointing": {
+    "partition_activations": false,
+    "contiguous_memory_optimization": false,
+    "cpu_checkpointing": false
+  },
+  "wall_clock_breakdown": true,
+  "zero_allow_untested_optimizer": true,
+  "zero_redistribute_gradients": true,
+  "zero_force_ds_cpu_optimizer": false
+}
