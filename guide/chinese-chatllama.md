@@ -66,7 +66,7 @@ export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
 export NCCL_DEBUG=info
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 
-deepspeed pretrain.py --deepspeed --deepspeed_config /home/app/ov-nlg-model/deepspeed_config.json \
+deepspeed pretrain.py --deepspeed --deepspeed_config /home/app/ov-nlg-model/tests/tencentpretrain/deepspeed_config.json \
                       --pretrained_model_path $LLaMA_PATH/chatllama_7b.bin \
                       --dataset_path $OUTPUT_DATASET_PATH --spm_model_path $LLaMA_PATH/tokenizer.model \
                       --config_path models/llama/7b_config.json \
