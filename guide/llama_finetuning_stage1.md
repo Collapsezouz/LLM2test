@@ -299,7 +299,7 @@ deepspeed llm_model/alpaca/train.py \
     --logging_steps 1 \
     --tf32 True \
     --model_max_length 512 \
-    --gradient_checkpointing True > ./logs/chatllama_zh_finetuning2.log 2>&1
+    --gradient_checkpointing True > ./logs/vicuna_finetuning1.log 2>&1
 
 ## 训练完成后移动目录
 复制到nas目录: cp -r ./logs/vicuna_stage1_6w_0410 /nas/tmp/phbsxgpt/

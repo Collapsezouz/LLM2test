@@ -93,7 +93,7 @@ def write_model(model_path, tp_model_dir=None, tp_model_name=None, input_dir=Non
 
     print(f"Fetching all parameters from the checkpoint at {input_base_path}.")
 
-    '''
+    # '''
     loaded = torch.load(os.path.join(tp_model_dir, tp_model_name+'.bin'))
 
     param_count = 0
@@ -176,7 +176,7 @@ def write_model(model_path, tp_model_dir=None, tp_model_name=None, input_dir=Non
     del state_dict
     del loaded
     gc.collect()
-    '''
+    # '''
 
     print("Loading the checkpoint in a Llama model.")
     model = LlamaForCausalLM.from_pretrained(tmp_model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
