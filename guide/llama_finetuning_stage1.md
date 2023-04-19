@@ -75,6 +75,10 @@ python src/transformers/models/llama/convert_llama_weights_to_hf.py \
   显存使用约11GB
   训练速度: 12条数据29s左右
 
+* 其它配置参考
+run on A10 instances (ex: , 4 x A10 24GB; , 2 x A10), make the following: https://github.com/databrickslabs/dolly/blob/master/config/ds_z3_bf16_config.json
+
+
 
 * 调试过程记录:  
 ```
@@ -213,6 +217,10 @@ deepspeed llm_model/alpaca/train.py \
     --gradient_checkpointing True > ./logs/llama_finetuning6.log 2>&1
 
 ## 训练完成后移动目录
+清理状态文件夹: 
+cd ./logs/llm_stage1_3w_0406
+find . -name global_step* | grep './checkpoint-' | xargs -i rm {} -rf
+cd ../..
 复制到nas目录: cp -r ./logs/llm_stage1_3w_0406 /nas/tmp/phbsxgpt/
 复制完成后, 删除原目录: rm ./logs/llm_stage1_3w_0406 -rf
 ```
@@ -221,9 +229,9 @@ deepspeed llm_model/alpaca/train.py \
 ## 基于chatllama_zh训练
 * 微调模型版本: /nas/tmp/phbsxgpt/chatllama_zh_stage1_6w_0406
 
+### v1
 前置模型: /nas/model/llama/hf_chatllama_zh_7b
 数据集: /nas/dataset/llm/phbs_llm/instruction_data_6w.jsonl
-
 
 使用deepspeed库的训练过程:
 ```
@@ -257,9 +265,58 @@ deepspeed llm_model/alpaca/train.py \
     --gradient_checkpointing True > ./logs/chatllama_zh_finetuning2.log 2>&1
 
 ## 训练完成后移动目录
+清理状态文件夹: 
+cd ./logs/chatllama_zh_stage1_6w_0406
+find . -name global_step* | grep './checkpoint-' | xargs -i rm {} -rf
+cd ../..
 复制到nas目录: cp -r ./logs/chatllama_zh_stage1_6w_0406 /nas/tmp/phbsxgpt/
 复制完成后, 删除原目录: rm ./logs/chatllama_zh_stage1_6w_0406 -rf
 ```
+
+### v1.1
+前置模型-v1: /nas/tmp/phbsxgpt/chatllama_zh_stage1_6w_0406
+数据集: /nas/dataset/llm/phbs_llm/business_instruction_data.jsonl
+
+使用deepspeed库的训练过程:
+```
+export model_path=/nas/tmp/phbsxgpt/chatllama_zh_stage1_6w_0406
+export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
+
+export deepspeed_config=llm_model/configs/deepspeed.json
+export data_path=/nas/dataset/llm/phbs_llm/business_instruction_data.jsonl
+export output_dir=./logs/chatllama_zh_stage1_v1.1
+
+deepspeed llm_model/alpaca/train.py \
+    --deepspeed $deepspeed_config \
+    --model_name_or_path $model_path \
+    --data_path $data_path \
+    --bf16 True \
+    --output_dir $output_dir\
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 2 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 1000 \
+    --save_total_limit 3 \
+    --learning_rate 2e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 512 \
+    --gradient_checkpointing True > ./logs/chatllama_zh_v1.1_ft.log 2>&1
+
+## 训练完成后移动目录
+清理状态文件夹: 
+cd ./logs/chatllama_zh_stage1_v1.1
+find . -name global_step* | grep './checkpoint-' | xargs -i rm {} -rf
+cd ../..
+复制到nas目录: cp -r ./logs/chatllama_zh_stage1_v1.1 /nas/tmp/phbsxgpt/
+复制完成后, 删除原目录: rm ./logs/chatllama_zh_stage1_v1.1 -rf
+```
+
 
 
 ## 基于vicuna训练
@@ -302,6 +359,60 @@ deepspeed llm_model/alpaca/train.py \
     --gradient_checkpointing True > ./logs/vicuna_finetuning1.log 2>&1
 
 ## 训练完成后移动目录
+清理状态文件夹: 
+cd ./logs/vicuna_stage1_6w_0410
+find . -name global_step* | grep './checkpoint-' | xargs -i rm {} -rf
+cd ../..
 复制到nas目录: cp -r ./logs/vicuna_stage1_6w_0410 /nas/tmp/phbsxgpt/
 复制完成后, 删除原目录: rm ./logs/vicuna_stage1_6w_0410 -rf
+```
+
+
+
+## 基于kaola训练
+* 微调模型版本: /nas/tmp/phbsxgpt/kaola_stage1_6w_0410
+
+前置模型: /nas/model/llama/kaola_7b
+数据集: /nas/dataset/llm/phbs_llm/instruction_data_6w.jsonl
+
+
+使用deepspeed库的训练过程:
+```
+export model_path=/nas/model/llama/kaola_7b
+export CUDA_VISIBLE_DEVICES=0,1,5,6,7
+
+export deepspeed_config=llm_model/configs/deepspeed.json
+export data_path=/nas/dataset/llm/phbs_llm/instruction_data_6w.jsonl
+export output_dir=./logs/kaola_stage1_6w_0410
+
+
+deepspeed llm_model/alpaca/train.py \
+    --deepspeed $deepspeed_config \
+    --model_name_or_path $model_path \
+    --data_path $data_path \
+    --bf16 True \
+    --output_dir $output_dir\
+    --num_train_epochs 1 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 2 \
+    --evaluation_strategy "no" \
+    --save_strategy "steps" \
+    --save_steps 1000 \
+    --save_total_limit 3 \
+    --learning_rate 2e-5 \
+    --weight_decay 0. \
+    --warmup_ratio 0.03 \
+    --lr_scheduler_type "cosine" \
+    --logging_steps 1 \
+    --tf32 True \
+    --model_max_length 512 \
+    --gradient_checkpointing True > ./logs/kaola_finetuning1.log 2>&1
+
+## 训练完成后移动目录
+清理状态文件夹: 
+cd ./logs/kaola_stage1_6w_0410
+find . -name global_step* | grep './checkpoint-' | xargs -i rm {} -rf
+cd ../..
+复制到nas目录: cp -r ./logs/kaola_stage1_6w_0410 /nas/tmp/phbsxgpt/
+复制完成后, 删除原目录: rm ./logs/kaola_stage1_6w_0410 -rf
 ```
