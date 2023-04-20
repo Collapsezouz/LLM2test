@@ -1,0 +1,128 @@
+# smart_auto llm_model.service.hf_text_generation test_tokenizer
+# smart_auto llm_model.service.hf_text_generation test_generate
+# smart_auto llm_model.service.hf_text_generation predict_service
+tasks:
+  __load__:
+  - auto_tasks.*.*
+  - .hf_text_generation
+  - .hf_tokenizer
+  - .llm_redis_pip
+  
+trees:
+  test_tokenizer:
+    __flow__:
+    - hf_tokenizer.test_sample
+    - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
+    - print.watch
+    - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model+test_tokenizer_decode)~@send
+    - print.watch$2
+
+  test_tokenizer2:
+    __flow__:
+    - hf_tokenizer.test_sample
+    - hf_tokenizer.init(hf_model)~encode(hf_model)~@send
+    - print.watch
+    - hf_tokenizer.init$2(hf_model)~decode(hf_model+test_tokenizer_decode)~@send
+    - print.watch$2
+
+  test_generate:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+      join_mode: object
+    __flow__:
+    - hf_tokenizer.test_sample
+    - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
+    - print.watch
+    - hf_text_generation.load_model(test_hf_model)~generate(test_hf_model)
+    - print.watch$2
+    - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model)~@send
+    - print.watch$3
+
+  predict_service:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+    __flow__:
+    - redis__pip.conn(redis_svr)~recv(pip_req)~@send
+    - print.watch
+    - cuda_tool.find_available_gpu(cuda_find_args)~@hf_text_generation.load_model(hf_model)~@hf_text_generation.generate(hf_model+predict_service)
+    # - redis__pip.conn$2(redis_svr)~send(pip_resp)
+    - print.watch$2
+    - llm_redis_pip.conn(redis_svr)~send_text(pip_resp)
+    cuda_tool.find_available_gpu:
+      worker_mode: process
+
+configs:
+  hf_model:
+    # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
+    model_path: /home/app/ov-nlg-model/logs/chatllama_zh_stage1_v1.1
+    model_kwargs:
+      # offload_folder: offload
+      # revision: step2000
+      device_map: auto
+    encode_opt:
+      bos: True
+      eos: False
+    decode_opt:
+      __extend__:
+      - ..encode_opt
+    # max_tokens: 512
+    max_new_tokens: 200
+    # pipeline_opt:
+    #   return_tensors: pt
+    prompt_pattern: "{input}\n\n- 输出:"
+
+  predict_service:
+    input_text_key: question
+    streamer: text
+    
+  # predict_args:
+  #   max_input_len: 256
+  #   max_gen_len: 100
+  #   send_step: 10
+  #   # send_step: 1000
+  #   prepend_input: True
+
+  redis_svr:
+    host: 10.2.223.230
+    port: 6390
+    password: 58d326d7e5e6e8739f51ddbe25be049fa4f75f9f
+    db: 3
+    redis_kwargs:
+      socket_timeout: 90
+      socket_connect_timeout: 60
+      retry_on_timeout: 1
+    
+  pip_req:
+    key: cedb_model.ov_nlg.pred_req
+    redis_poll_interval: 30
+    is_daemon: 1
+  
+  pip_resp:
+    key: cedb_model.ov_nlg.pred_resp
+    item_send_key: _send_queue
+    item_ttl: 86400
+    item_key: pred_text
+    # item_sub_key: pred_sub_text
+    # item_sub_end: pred_end
+
+  cuda_find_args:
+    gpu_num: 1
+    free_memory_ratio: 0.9
+    # shuffle: False
+  
+  test_tokenizer_decode:
+    item_tokens_key: tokens
+  
+  test_hf_model:
+    model_name: "EleutherAI/pythia-70m"
+    encode_opt: {}
+    decode_opt:
+      __extend__:
+      - ..encode_opt
+    max_tokens: 512
+    max_new_tokens: 20
+    # output_full_text: True
+    # pipeline_opt:
+    #   return_tensors: pt
