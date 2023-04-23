@@ -3,7 +3,7 @@ import os
 os.chdir('/home/app/open/TencentPretrain')
 
 sys.path.insert(0, '/home/app/open/TencentPretrain')
-sys.path.append('/home/app/ov-nlg-model')
+sys.path.append('/home/app/expert-cpt')
 
 LOCAL_RANK = os.environ.get('LOCAL_RANK')
 
@@ -15,7 +15,7 @@ if LOCAL_RANK == '0':
     enable_by_env()
 
 from smart.utils.log import auto_load_logging_config, set_default_logging_config
-auto_load_logging_config(base_dir='/home/app/ov-nlg-model') or set_default_logging_config()
+auto_load_logging_config(base_dir='/home/app/expert-cpt') or set_default_logging_config()
 
 logger.debug('test pretrain %s, LOCAL_RANK: %s', os.getpid(), os.environ.get('LOCAL_RANK'))
 

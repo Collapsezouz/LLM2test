@@ -66,13 +66,13 @@ export CUDA_VISIBLE_DEVICES=2,3,4,5,6,7
 export NCCL_DEBUG=info
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 
-deepspeed pretrain.py --deepspeed --deepspeed_config /home/app/ov-nlg-model/tests/tencentpretrain/deepspeed_config.json \
+deepspeed pretrain.py --deepspeed --deepspeed_config /home/app/expert-cpt/tests/tencentpretrain/deepspeed_config.json \
                       --pretrained_model_path $LLaMA_PATH/chatllama_7b.bin \
                       --dataset_path $OUTPUT_DATASET_PATH --spm_model_path $LLaMA_PATH/tokenizer.model \
                       --config_path models/llama/7b_config.json \
                       --output_model_path /nas/tmp/hhw/phbs_llama/phbs_llama_7b \
                       --world_size $Gpu_Num --data_processor lm \
-                      --total_steps $Total_Step --save_checkpoint_steps 2000 --batch_size $Gpu_Num > /home/app/ov-nlg-model/logs/phbs_llama_finetuning5.log 2>&1
+                      --total_steps $Total_Step --save_checkpoint_steps 2000 --batch_size $Gpu_Num > /home/app/expert-cpt/logs/phbs_llama_finetuning5.log 2>&1
 ```
 
 * debug:  
@@ -86,9 +86,9 @@ export CUDA_VISIBLE_DEVICES=4,5,6,7
 export NCCL_DEBUG=info
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
 
-> cd /home/app/ov-nlg-model
+> cd /home/app/expert-cpt
 
-DEBUG_PORT=5679 REMOTE_DEBUG=1 deepspeed tests/tp_pretrain.py --deepspeed --deepspeed_config /home/app/ov-nlg-model/deepspeed_config.json \
+DEBUG_PORT=5679 REMOTE_DEBUG=1 deepspeed tests/tp_pretrain.py --deepspeed --deepspeed_config /home/app/expert-cpt/deepspeed_config.json \
     --pretrained_model_path $LLaMA_PATH/chatllama_7b.bin \
     --dataset_path $OUTPUT_DATASET_PATH --spm_model_path $LLaMA_PATH/tokenizer.model \
     --config_path models/llama/7b_config.json \
