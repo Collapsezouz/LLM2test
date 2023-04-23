@@ -1,0 +1,41 @@
+# smart_auto llm_model.ft_data.merge_data merge_v1_1
+tasks:
+  __load__:
+  - auto_tasks.*.*
+
+trees:
+  # merge_v1_1:
+  #   jsonl__file.read(data_1_0)~@send:
+  #     next: jsonl__file.write
+  #   jsonl__file.read$2(data_1_1)~@send:
+  #     next: jsonl__file.write
+  #   jsonl__file.write(merge_data_1_1):
+  #     worker_num: 1
+  #     worker_mode: thread
+
+  merge_v1_1:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+    __flow__:
+    - jsonl__file.read(data_1_0)~@send~read(data_1_1)~@send
+    - jsonl__file.write(merge_data_1_1)
+
+configs:
+  phbs_llm_data:
+    dir_path: /nas/dataset/llm/phbs_llm
+  
+  data_1_0:
+    __extend__:
+    - phbs_llm_data
+    file_name: instruction_data_6w.jsonl
+  
+  data_1_1:
+    __extend__:
+    - phbs_llm_data
+    file_name: business_instruction_data.jsonl
+  
+  merge_data_1_1:
+    __extend__:
+    - phbs_llm_data
+    file_name: merge_instruction_data_v1.1.jsonl

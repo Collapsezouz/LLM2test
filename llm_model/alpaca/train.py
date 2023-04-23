@@ -58,6 +58,17 @@ PROMPT_DICT = {
     )
 }
 
+PROMPT_DICT2 = {
+    # EOB: End Of Block
+    "prompt_input": (
+        "{system}<!User>:\n{instruction}\n<!Input>:\n{input}\n<!Machine>: "
+    ),
+    "prompt_no_input": (
+        "{system}<!User>:\n{instruction}\n<!Machine>: "
+    )
+}
+
+
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")

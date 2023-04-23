@@ -13,6 +13,17 @@
 > ds_report
 
 
+# 运行服务
+
+```
+> cd /home/app/expert-cpt
+> smart_auto llm_model.service.hf_text_generation predict_service > ./logs/llm_service_predict.log 2>&1 &
+
+ps -ef | grep smart_auto | grep 'llm_model.service'
+
+tail -f ./logs/llm_service_predict.log
+```
+
 
 # QA
 常见问题记录.  
