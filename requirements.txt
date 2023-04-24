@@ -1,7 +1,8 @@
 requests
 fire
 pymongo>=4,<5
-
+protobuf<=3.20
+transformers>=4.28.1
 deepspeed
 
 # [nexus.dev.perfectcode.tech]

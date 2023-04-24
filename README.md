@@ -17,12 +17,14 @@
 
 ```
 > cd /home/app/expert-cpt
-> smart_auto llm_model.service.hf_text_generation predict_service > ./logs/llm_service_predict.log 2>&1 &
+> smart_auto llm_model.service.chatllama_zh.stage1_v1-1-1 predict_service > ./logs/llm_service_predict_v111.log 2>&1 &
 
 ps -ef | grep smart_auto | grep 'llm_model.service'
 
 tail -f ./logs/llm_service_predict.log
 ```
+
+* 停止服务: `ps -ef | grep smart_auto | grep 'llm_model.service' | awk '{print $2}' | xargs kill -9`
 
 
 # QA

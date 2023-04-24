@@ -6,6 +6,7 @@ from transformers.generation.streamers import BaseStreamer
 from transformers import pipeline
 
 from smart.utils.dict import dict_find
+from . import utils
 
 class TokenIteratorStreamer(BaseStreamer):
     def put(self, value):
@@ -19,7 +20,7 @@ class TokenIteratorStreamer(BaseStreamer):
 
 @auto_load.task('llm_model.hf_text_generation')
 class HFTextGenerationTask(HFModelTask):
-    def load_model(self, model_name=None, model_path=None, enable_bfloat16:bool=True, model_kwargs=None):
+    def load_model(self, model_name=None, model_path=None, enable_bfloat16:bool=True, use_fast:bool=False, model_kwargs=None):
         if model_path is None:
             model_opts = self.init_model(model_name=model_name, model_path=model_path)
             model_path = model_opts.get('model_path')
@@ -33,14 +34,20 @@ class HFTextGenerationTask(HFModelTask):
             **model_kwargs,
             local_files_only=True
         )
-        logger.info("loaded hf_model cost %s seconds.", time.monotonic() - begin_ts)
-        tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+        ts_1 = time.monotonic()
+        logger.info("loaded hf model cost %s seconds.", ts_1 - begin_ts)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_path, 
+            use_fast=use_fast,
+            local_files_only=True)
+        ts_2 = time.monotonic()
+        logger.info("loaded hf tokenizer cost %s seconds.", ts_2 - ts_1)
         return {
             'tokenizer': tokenizer,
             'model': hf_model
         }
 
-    def generate(self, model=None, tokenizer=None, prompt_pattern=None, input_text_key='text', input_tokens_key='tokens', output_tokens_key='pred_tokens', output_text_key='pred_text',
+    def generate(self, model=None, tokenizer=None, prompt_pattern=None, input_text_key='text', input_quote_key='quote', input_tokens_key='tokens', output_tokens_key='pred_tokens', output_text_key='pred_text',
                 max_tokens:int=None, max_new_tokens:int=None, output_full_text:bool=False, pipeline_opt:dict=None, streamer=None):
         pipeline_opt = pipeline_opt or {}
         generator = pipeline('text-generation', model=model, tokenizer=tokenizer, **pipeline_opt)
@@ -51,7 +58,9 @@ class HFTextGenerationTask(HFModelTask):
 
         for i, item in enumerate(self.recv_data()):
             input_tokens = item.get(input_tokens_key)
-            input_text = item.get(input_text_key)
+            input_text = utils.item_get_by_multi_key(item, input_text_key)
+            input_quote = utils.item_get_by_multi_key(item, input_quote_key)
+            # input_text = item.get(input_text_key)
             _max_new_tokens = dict_find(item, ('pred_opt', 'max_new_tokens'), default_val=max_new_tokens)
             _max_tokens = dict_find(item, ('pred_opt', 'max_tokens'), default_val=max_tokens)
             _generator_opt = dict(generator_opt)
@@ -62,7 +71,15 @@ class HFTextGenerationTask(HFModelTask):
                 self.send_data(item)
                 continue
             if prompt_pattern:
-                prompt_input = prompt_pattern.format(input=input_text)
+                if input_quote:
+                    prompt_input = prompt_pattern.get('quote').format(
+                        input=input_text,
+                        quote=input_quote
+                    )
+                else:
+                    prompt_input = prompt_pattern.get('input').format(
+                        input=input_text
+                    )
             else:
                 prompt_input = input_text
             logger.debug('hf_text_generation %s input: %s', i, prompt_input)

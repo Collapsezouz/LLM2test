@@ -1,0 +1,24 @@
+import:
+- ..hf_text_generation
+
+configs:
+  hf_model:
+    model_path: /nas/model/phbsxgpt/chatllama_zh_stage1_v1.1
+    # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1
+    model_kwargs:
+      # offload_folder: offload
+      # revision: step2000
+      device_map: auto
+    encode_opt:
+      bos: True
+      eos: False
+    decode_opt:
+      bos: True
+      eos: False
+    # max_tokens: 512
+    max_new_tokens: 200
+    # pipeline_opt:
+    #   return_tensors: pt
+    prompt_pattern:
+      input: "{input}\n- 输出:"
+      quote: "{input}\n\n- 输入:\n{quote}\n\n- 输出:"

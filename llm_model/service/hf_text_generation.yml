@@ -56,25 +56,31 @@ trees:
 configs:
   hf_model:
     # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
-    model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1
+    # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1
+    model_name: "EleutherAI/pythia-70m"
     model_kwargs:
       # offload_folder: offload
       # revision: step2000
       device_map: auto
-    encode_opt:
-      bos: True
-      eos: False
-    decode_opt:
-      __extend__:
-      - ..encode_opt
+    # encode_opt:
+    #   bos: True
+    #   eos: False
+    # decode_opt:
+    #   bos: True
+    #   eos: False
     # max_tokens: 512
     max_new_tokens: 200
     # pipeline_opt:
     #   return_tensors: pt
-    prompt_pattern: "{input}\n\n- 输出:"
+    prompt_pattern:
+      input: "{input}\n- 输出:"
+      quote: "{input}\n\n- 输入:\n{quote}\n\n- 输出:"
 
   predict_service:
-    input_text_key: question
+    input_text_key:
+    - ask
+    - question
+    input_quote_key: quote
     streamer: text
     
   # predict_args:

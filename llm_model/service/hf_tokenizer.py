@@ -5,12 +5,16 @@ from transformers import AutoTokenizer, PreTrainedTokenizer
 @auto_load.task('llm_model.hf_tokenizer')
 class HFTokenizerTask(HFModelTask):
 
-    def init(self, model_name=None, model_path=None):
+    def init(self, model_name=None, model_path=None, use_fast:bool=False):
         if model_path is None:
             model_opts = self.init_model(model_name=model_name, model_path=model_path)
             model_path = model_opts.get('model_path')
         assert model_path, 'model_path is None'
-        tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_path, 
+            use_fast=use_fast,
+            local_files_only=True
+        )
         logger.debug('hf_tokenizer init %s vocab, special_token: %s', tokenizer.vocab_size, tokenizer.special_tokens_map)
         return {
             'tokenizer': tokenizer

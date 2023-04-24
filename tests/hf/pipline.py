@@ -1,5 +1,5 @@
 # export DEBUG_PORT=5679
-# REMOTE_DEBUG=1 python -m tests.transformers.pipline generate
+# REMOTE_DEBUG=1 python -m tests.hf.pipline generate
 import torch, time
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import pipeline
