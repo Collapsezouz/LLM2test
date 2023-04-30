@@ -30,44 +30,14 @@ except:
     auto_load_logging_config() or set_default_logging_config()
 
 from llm_model.alpaca import utils
+from llm_model.alpaca.instruct_util import instruct_encode
+
 
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
 DEFAULT_BOS_TOKEN = "</s>"
 DEFAULT_UNK_TOKEN = "</s>"
-# PROMPT_DICT = {
-#     "prompt_input": (
-#         "Below is an instruction that describes a task, paired with an input that provides further context. "
-#         "Write a response that appropriately completes the request.\n\n"
-#         "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
-#     ),
-#     "prompt_no_input": (
-#         "Below is an instruction that describes a task. "
-#         "Write a response that appropriately completes the request.\n\n"
-#         "### Instruction:\n{instruction}\n\n### Response:"
-#     ),
-# }
-
-PROMPT_DICT = {
-    "prompt_input": (
-        "{instruction}\n\n- 输入:\n{input}\n\n- 输出:"
-    ),
-    "prompt_no_input": (
-        "{instruction}\n\n- 输出:"
-    )
-}
-
-PROMPT_DICT2 = {
-    # EOB: End Of Block
-    "prompt_input": (
-        "{system}<!User>:\n{instruction}\n<!Input>:\n{input}\n<!Machine>: "
-    ),
-    "prompt_no_input": (
-        "{system}<!User>:\n{instruction}\n<!Machine>: "
-    )
-}
-
 
 @dataclass
 class ModelArguments:
@@ -77,6 +47,7 @@ class ModelArguments:
 @dataclass
 class DataArguments:
     data_path: str = field(default=None, metadata={"help": "Path to the training data."})
+    instruct_version: int = field(default=None, metadata={"help": "instruct pattern version"})
 
 
 @dataclass
@@ -163,19 +134,17 @@ def preprocess(
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer):
+    def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer, instruct_version:int=None):
         super(SupervisedDataset, self).__init__()
         logging.warning("Loading data...")
         list_data_dict = utils.load_dataset(data_path)
 
-
         logging.warning("Formatting inputs...")
-        prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
-        sources = [
-            prompt_input.format_map(example) if example.get("input", "") not in ('', '<noinput>') else prompt_no_input.format_map(example)
-            for example in list_data_dict
-        ]
+        sources = [ instruct_encode(example, version=instruct_version) for example in list_data_dict]
         targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
+
+        if len(sources): 
+            logging.debug('SupervisedDataset first input: %s\n|output|: %s', sources[0], targets[0])
 
         logging.warning("Tokenizing inputs... This may take some time...")
         data_dict = preprocess(sources, targets, tokenizer)
@@ -209,9 +178,13 @@ class DataCollatorForSupervisedDataset(object):
         )
 
 
-def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args) -> Dict:
+def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args:DataArguments) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
-    train_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=data_args.data_path)
+    train_dataset = SupervisedDataset(
+        tokenizer=tokenizer, 
+        data_path=data_args.data_path,
+        instruct_version=data_args.instruct_version
+    )
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
     return dict(train_dataset=train_dataset, eval_dataset=None, data_collator=data_collator)
 

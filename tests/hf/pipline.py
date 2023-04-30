@@ -1,10 +1,13 @@
 # export DEBUG_PORT=5679
+# export CUDA_VISIBLE_DEVICES=1
 # REMOTE_DEBUG=1 python -m tests.hf.pipline generate
+# REMOTE_DEBUG=1 python -m tests.hf.pipline llama
 import torch, time
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import pipeline
 from transformers.generation.streamers import BaseStreamer
 from huggingface_hub import snapshot_download
+from transformers import GenerationConfig
 
 from .. import logger
 
@@ -17,7 +20,12 @@ _hf_hub_download_args = {
 CACHE_DIR = _hf_hub_download_args['cache_dir']
 
 _default_model = "EleutherAI/pythia-70m"
+_default_llama_model_path = '/home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1'
 
+_default_input_text = '''我需要为一家医疗器械公司制定销售策略，该如何入手？
+
+- 输出:
+'''
 
 class TestTokenIteratorStreamer(BaseStreamer):
     def put(self, value):
@@ -68,6 +76,55 @@ def test_generate(model_name=None, model_path=None):
     first_char = tokenizer.decode([first_token_id])
     logger.info('first_char: %s', first_char)
 
+
+
+def test_llama(text=None, max_new_tokens:int=200, model_name=None, model_path=None, use_fast:bool=False, device_map:str="auto"):
+    if model_name:
+        model_path = snapshot_download(
+            repo_id=model_name,
+            cache_dir=CACHE_DIR,
+            local_files_only = True
+        )
+        logger.debug("model_path: %s", model_path)
+    elif not model_path:
+        model_path = _default_llama_model_path
+    device_map = device_map or None
+    text = text or _default_input_text
+    
+    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=use_fast, local_files_only=True)
+    model_kwargs = {
+        'torch_dtype': torch.bfloat16
+    }
+    begin_ts = time.monotonic()
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path, 
+        device_map=device_map,
+    #     offload_folder="offload", offload_state_dict = True,
+    #     torch_dtype=torch.float16,
+    #     torch_dtype=torch.bfloat16,
+    #     revision="step2000",
+        **model_kwargs,
+        local_files_only=True
+    )
+
+    logger.info("loaded model cost %s seconds.", time.monotonic() - begin_ts)
+    generation_config = GenerationConfig.from_pretrained(model_path, local_files_only=True)
+    logger.info("generation_config: %s", generation_config)
+
+    generator = pipeline(
+        'text-generation', 
+        model=model, 
+        tokenizer=tokenizer,
+        # return_tensors='pt'
+    )
+
+    streamer = TestTokenIteratorStreamer()
+    rst = generator(
+        text, 
+        streamer=streamer,
+        max_new_tokens=max_new_tokens)
+    logger.info("rst: %s", rst)
+    logger.info("streamer: %s", streamer)
 
     
 if __name__ == "__main__":
