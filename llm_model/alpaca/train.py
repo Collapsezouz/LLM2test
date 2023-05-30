@@ -11,6 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+from ensurepip import version
 import sys, os
 import copy
 import logging
@@ -30,7 +31,7 @@ except:
     auto_load_logging_config() or set_default_logging_config()
 
 from llm_model.alpaca import utils
-from llm_model.alpaca.instruct_util import instruct_encode
+from llm_model.alpaca.instruct_util import instruct_encode, instruct_train_dataset
 
 
 IGNORE_INDEX = -100
@@ -140,8 +141,15 @@ class SupervisedDataset(Dataset):
         list_data_dict = utils.load_dataset(data_path)
 
         logging.warning("Formatting inputs...")
-        sources = [ instruct_encode(example, version=instruct_version) for example in list_data_dict]
-        targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
+        # sources = [ instruct_encode(example, version=instruct_version) for example in list_data_dict]
+        # targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
+        sources, targets = [], []
+        for example in list_data_dict:
+            ds_iter = instruct_train_dataset(example, version=instruct_version)
+            for input_text, output_text in ds_iter:
+                if input_text and output_text:
+                    sources.append(input_text)
+                    targets.append(output_text)
 
         if len(sources): 
             logging.debug('SupervisedDataset first input: %s\n|output|: %s', sources[0], targets[0])
