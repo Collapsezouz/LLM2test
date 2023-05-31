@@ -46,3 +46,39 @@ class HFServiceTestTask(TreeMultiTask):
                     logger.info('%s', val)
                     if val[-1] in ('\0', b'\0', 0):
                         break
+
+    def test_job_sample(self):
+        self.send_data({
+            'idx': 0,
+            'instruct': '中国的首都',
+            'pred_opt': {
+                'max_new_tokens': 20
+            }
+        })
+        self.send_data({
+            'idx': 1,
+            'instruct': '将以下文档总结成几个要点。',
+            'input': '''IPO进程“停摆”近一年之后，中国老牌企业软件公司用友集团旗下子公司——用友金融信息技术股份有限公司（NEEQ：839483）于近日宣布，拟公开发行股票并在北京证券交易所上市，继续完成受疫情而搁置的上市进程。
+这也是首家宣布拟在北交所上市的金融科技公司。
+2016年11月，用友金融挂牌新三板，主要提供金融行业数字化产品及解决方案，用友网络(24.530, -1.66, -6.34%)直接持有用友金融74.53%股份。
+2021年9月，用友金融在新三板停牌，并在华泰联合证券的辅导下，通过了中国证监会北京监管局的辅导验收，并准备转入“精选层”，在北交所成立后，准备通过北交所上市，并已经接受多轮问询。
+2022年4月，在回复北交所第三轮问询时，用友金融表示，由于疫情等原因，预计无法在规定时间内完成回复，并申请延期至今。''',
+            'pred_opt': {
+                'max_new_tokens': 200,
+                'temperature': 1.2,
+                'top_p': 0.9
+            }
+        })
+        self.send_data({
+            'idx': 2,
+            'system': '你是信息抽取机器人。输入的内容是从PDF提取的结果, 用<span x=? y=?>?</span>表示PDF的一个文字块，x为横坐标, y为纵坐标。',
+            'instruct': '提取出所有融资租赁公司的名称, 按列表形式返回',
+            'input': '''<page num=75>
+<span x=242 y=632>名称：公司A</span>
+<span x=242 y=674>名称：公司B</span>
+</page>''',
+            'pred_opt': {
+                'max_new_tokens': 100,
+                'temperature': 0
+            }
+        })

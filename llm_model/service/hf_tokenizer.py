@@ -92,6 +92,8 @@ class HFTokenizerTask(HFModelTask):
             'text': '你好',
             'pred_opt': {
                 'max_new_tokens': 10,
+                'temperature': 1.2,
+                'top_p': 0.9
             }
         })
         self.send_data({

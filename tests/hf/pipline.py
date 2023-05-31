@@ -47,7 +47,7 @@ def test_generate(model_name=None, model_path=None):
         )
         logger.debug("model_path: %s", model_path)
     
-    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True, use_fast=False)
     model_kwargs = {
         'torch_dtype': torch.bfloat16
     }
@@ -75,7 +75,6 @@ def test_generate(model_name=None, model_path=None):
     first_token_id = rst[0]['generated_token_ids'][0]
     first_char = tokenizer.decode([first_token_id])
     logger.info('first_char: %s', first_char)
-
 
 
 def test_llama(text=None, max_new_tokens:int=200, model_name=None, model_path=None, use_fast:bool=False, device_map:str="auto"):

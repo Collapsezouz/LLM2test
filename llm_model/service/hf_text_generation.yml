@@ -1,6 +1,9 @@
 # smart_auto llm_model.service.hf_text_generation test_tokenizer
 # smart_auto llm_model.service.hf_text_generation test_generate
 # smart_auto llm_model.service.hf_text_generation predict_service
+### Debug
+# export DEBUG_PORT=5679
+# smart_auto_debug llm_model.service.hf_text_generation test_generate
 tasks:
   __load__:
   - auto_tasks.*.*
@@ -56,8 +59,8 @@ trees:
 configs:
   hf_model:
     # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
-    # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1
-    model_name: "EleutherAI/pythia-70m"
+    model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
+    # model_name: "EleutherAI/pythia-70m"
     model_kwargs:
       # offload_folder: offload
       # revision: step2000
@@ -122,7 +125,7 @@ configs:
     item_tokens_key: tokens
   
   test_hf_model:
-    model_name: "EleutherAI/pythia-70m"
+    model_name: "gpt2"
     encode_opt: {}
     decode_opt:
       __extend__:

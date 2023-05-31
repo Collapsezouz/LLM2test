@@ -64,6 +64,7 @@ class HFTextGenerationTask(HFModelTask):
             _max_new_tokens = dict_find(item, ('pred_opt', 'max_new_tokens'), default_val=max_new_tokens)
             _max_tokens = dict_find(item, ('pred_opt', 'max_tokens'), default_val=max_tokens)
             _generator_opt = dict(generator_opt)
+            _generator_opt.update(item.get('pred_opt') or {})
             if _max_new_tokens: _generator_opt['max_new_tokens'] = _max_new_tokens
             # if _max_tokens: _generator_opt['max_tokens'] = _max_tokens
             if not input_text:

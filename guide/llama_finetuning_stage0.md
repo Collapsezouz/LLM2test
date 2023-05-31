@@ -21,7 +21,7 @@
 文件路径: /nas/dataset/llm/fnlp/moss-002-sft-data
 
 * belle
-HuggingFace Detaset:
+HuggingFace Dataset:
 - BelleGroup/multiturn_chat_0.8M
 - BelleGroup/train_1M_CN
 - BelleGroup/generated_chat_0.4M

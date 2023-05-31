@@ -23,3 +23,13 @@ trees:
 configs:
   test_send_args:
     send_end_cmd: 0
+
+  # redis_svr:
+  #   host: 10.2.223.230
+  #   port: 6390
+  #   password: 58d326d7e5e6e8739f51ddbe25be049fa4f75f9f
+  #   db: 3
+  #   redis_kwargs:
+  #     socket_timeout: 90
+  #     socket_connect_timeout: 60
+  #     retry_on_timeout: 1
