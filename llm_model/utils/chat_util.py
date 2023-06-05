@@ -110,6 +110,7 @@ class ChatTextEncoder:
     
     def block_end(self, key):
         return "\n"
+        # return "<|eob|>\n"
     
     def block_encode(self, key, value):
         if key in ('plugins', ChatBlockKey.plugins):
@@ -167,6 +168,10 @@ class ChatTextEncoder:
                         block_key = ChatBlockKey.call
                         value = output.get('call')
                         has_call = True
+                    elif 'thought' in output:
+                        # 思维链
+                        block_key = ChatBlockKey.thought
+                        value = output.get('thought')
                     else:
                         # 机器生成文本回答
                         block_key = ChatBlockKey.machine
@@ -179,7 +184,7 @@ class ChatTextEncoder:
                         # 插件返回结果
                         if 'call' not in output: continue
                         block_key = ChatBlockKey.call_result
-                        value = output.get('text') or ''
+                        value = dict_multi_get(output, ('text', 'call_result'), default_val='')
                         block_text = self.block_encode(block_key, value)
                         block = ChatBlockItem(block_key, block_text, value)
                         block_list.append(block)
@@ -209,7 +214,7 @@ class ChatTextEncoder:
                 prev_round_data_list.append(round_data)
                 continue
             input_output_idx_tuple_iter = self.__input_output_idx_tuple_iter((
-                block.key in (ChatBlockKey.call, ChatBlockKey.machine)
+                block.key in (ChatBlockKey.call, ChatBlockKey.machine, ChatBlockKey.thought)
                 for block in round_data.block_list
             ))
             for input_idx, output_idx in input_output_idx_tuple_iter:
