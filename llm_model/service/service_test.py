@@ -29,6 +29,115 @@ class HFServiceTestTask(TreeMultiTask):
             #     'max_new_tokens': 10,
             # }
         })
+
+    def plugin_sample(self):
+        req_id = uuid.uuid1().hex
+        self.send_data({
+            'idx': 0,
+            'system': '用户正在使用aida系统, 当前界面: 表格模版报告',
+            'plugins': {
+                "aida": {
+                    "name": "数字助理系统",
+                    "desc": "AI自动生成表格和智能写作的系统",
+                    "api": {
+                        "odb/metadata": {
+                            "desc": "新建或修改在线表格"
+                        },
+                        "odb/data": {
+                            "desc": "新增或修改表格行列数据"
+                        }
+                    }
+                },
+                # "browser_search": {
+                #     "name": "浏览器搜索"
+                # },
+                # "es_search": {
+                #     "name": "ElasticSearch搜索",
+                #     "desc": "ES表格搜索"
+                # },
+                # "graph_search": {
+                #     "name": "图数据库搜索",
+                #     "desc": "知识图谱搜索"
+                # },
+                # "calculator": {
+                #     "name": "计算器"
+                # }
+            },
+            'chat': [
+                {
+                    "ask": "营收超过100亿元的科创板公司的2020年的营业成本, 营业收入和营业利润",
+                    # "quote": "",
+                    "output": [
+                        [
+                            {
+                                "call": 'plugin_desc("aida", api=["odb/*"])',
+                                "text": '''Object Column {
+    name:Str // display name
+    key:Str
+}
+Object RowData: Map<key:Str, value:Str> // key is Column.key, value is 单元格的值
+Object MetaData { // 表格的元数据定义
+    column: List[Column]
+}
+Object View { // 多维表格试图
+    row: List[Column] // 定义行字段
+    column: List[RowData] // 定义列字段
+    value: Str // 视图单元格值的列名, Column.key or Column.name
+}
+Api "odb/save" { // 保存表格结构、视图和数据
+    params: {
+        metadata: MetaData
+        view: View
+        data: List[RowData]
+    }
+}
+Api "odb/put_row" { // 保存行数据
+    params: {
+        metadata: MetaData
+        view: View
+        data: List[RowData] // RowData中的_id是空表示插入新行, _id非空表示修改旧行数据
+    }
+}'''
+                            }
+                        ],
+                        [
+                            {
+                                "call": '''aida(api="odb_save", params={
+    "metadata": {
+        "column": [
+            {"name": "公司", "key":"company"},
+            {"name": "属性", "key":"attr"},
+            {"name": "时间(年)", "key":"year"},
+            {"name": "值", "key":"value"}
+        ]
+    },
+    "view": {
+        "row": [
+            {"name": "公司", "key":"company"}
+        ],
+        "column": [
+            {"attr":"营业成本", "year":"2020"},
+            {"attr":"营业收入", "year":"2020"},
+            {"attr":"营业利润", "year":"2020"},
+        ],
+        "value": "value"
+    }
+})''',
+                                "text": '<link module="odb" id="dfAernD1"/>'
+                            }
+                        ],
+                        [
+                            {"text":"为您创建了一张表格。请启用数据查询类的插件，自动填充表格数据。"}
+                        ]
+                    ],
+                }
+            ],
+            '_send_text': 'tmp.llm_model.service_test.text:'+req_id+'.0',
+            '_send_queue': 'tmp.llm_model.service_test:'+req_id+'.0',
+            'pred_opt': {
+                'max_new_tokens': 1000
+            }
+        })
     
     def print_resp(self, redis:Redis, item_send_key='_send_queue'):
         item_iter = self.recv_data()
