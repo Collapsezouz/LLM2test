@@ -90,8 +90,8 @@ def write_model(model_path, tp_model_dir=None, tp_model_name=None, input_dir=Non
     # permute for sliced rotary
     def permute(w):
         return w.view(n_heads, dim // n_heads // 2, 2, dim).transpose(1, 2).reshape(dim, dim)
-
-    print(f"Fetching all parameters from the checkpoint at {input_base_path}.")
+    
+    print(f"Fetching all parameters from the checkpoint at {tp_model_dir}.")
 
     # '''
     loaded = torch.load(os.path.join(tp_model_dir, tp_model_name+'.bin'))

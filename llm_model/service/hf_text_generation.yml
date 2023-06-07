@@ -110,7 +110,7 @@ configs:
   
   pip_resp:
     key: cedb_model.ov_nlg.pred_resp
-    item_send_key: _send_queue
+    item_send_key: _send_text
     item_ttl: 86400
     item_key: pred_text
     # item_sub_key: pred_sub_text
