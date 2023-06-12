@@ -32,7 +32,8 @@
   "zero_optimization": {
     "stage": 3,
     "offload_optimizer": {
-      "device": "cpu",
+      "device": "nvme",
+      "nvme_path": "/local_nvme",
       "pin_memory": true
     },
     "offload_param": {
