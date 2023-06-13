@@ -190,12 +190,12 @@ cd ../..
 ```
 
 ## MOSS_v1.0_query
-前置模型: /data/share/model/huggingface/models--fnlp--moss-moon-003-sft-plugin/snapshots/8364711b02c73e75f75b99e9ef0f97214ebed035
+前置模型: /cache/model/huggingface/models--fnlp--moss-moon-003-sft-plugin/snapshots/8364711b02c73e75f75b99e9ef0f97214ebed035
 数据集: /nas/dataset/llm/phbs_llm/plugin_instruct/plugin_query_8k.jsonl
 
 使用deepspeed库的训练过程:
 ```
-export model_path=/data/share/model/huggingface/models--fnlp--moss-moon-003-sft-plugin/snapshots/8364711b02c73e75f75b99e9ef0f97214ebed035
+export model_path=/cache/model/huggingface/models--fnlp--moss-moon-003-sft-plugin/snapshots/8364711b02c73e75f75b99e9ef0f97214ebed035
 export CUDA_VISIBLE_DEVICES=6,7
 
 export deepspeed_config=llm_model/configs/deepspeed_stage3_16b.json
@@ -213,8 +213,8 @@ deepspeed llm_model/alpaca/train_moss.py \
     --gradient_accumulation_steps=2 \
     --evaluation_strategy="no" \
     --save_strategy="steps" \
-    --save_steps=1000 \
-    --save_total_limit=3 \
+    --save_steps=200 \
+    --save_total_limit=1 \
     --learning_rate=2e-5 \
     --weight_decay=0. \
     --warmup_ratio=0.03 \

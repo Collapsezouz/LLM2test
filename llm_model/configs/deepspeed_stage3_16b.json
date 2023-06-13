@@ -33,7 +33,7 @@
     "stage": 3,
     "offload_optimizer": {
       "device": "nvme",
-      "nvme_path": "/local_nvme",
+      "nvme_path": "/cache",
       "pin_memory": true
     },
     "offload_param": {
