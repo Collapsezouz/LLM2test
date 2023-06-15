@@ -44,7 +44,7 @@ def test_train_data(model_path=None, max_input_tokens:int=2560, max_context_toke
             input_text = input_dialog.to_text()
             output_text = output_msg.to_text()
             logger.info('\n---Model Input %s-%s---\n%s---Model Output---\n%s', round_idx, j, input_text, output_text)
-            # 转成tokens, 并截断
+            # encode input
             chat_tokenizer = ChatTokenizer(dialog=input_dialog, tokenizer=tokenizer)
             ctx_tokens, chat_tokens = chat_tokenizer.truncate_tokens(
                 max_input_tokens=max_input_tokens,
@@ -54,6 +54,14 @@ def test_train_data(model_path=None, max_input_tokens:int=2560, max_context_toke
             logger.info('input tokens %s: %s', len(tokens), tokens)
             de_text = tokenizer.decode(tokens)
             logger.info('input tokens decode: %s', de_text)
+            # encode output
+            output_tokens = tokenizer.encode(output_text, add_special_tokens=False)
+            ori_output_tokens_len = len(output_tokens)
+            if len(output_tokens) > max_output_token:
+                output_tokens = output_tokens[:max_output_token]
+            logger.info("output_tokens len: %s -> %s", ori_output_tokens_len, len(output_tokens))
+            de_output_text = tokenizer.decode(output_tokens)
+            logger.info("output truncated: %s", de_output_text)
 
 def test_predict_input(model_path=None, max_input_tokens:int=2048, max_context_tokens:int=1024):
     tokenizer = get_tokenizer(model_path=(model_path or test_config.default_llama_model_path))
