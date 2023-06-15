@@ -1,9 +1,11 @@
 import json, typing
 from enum import Enum, auto
+from transformers import PreTrainedTokenizerBase
 from smart.utils.yaml import yaml_dumps
 from smart.utils.list import list_safe_iter
 # from collections import namedtuple
-from typing import NamedTuple
+from llm_model.utils.iter_util import items_remove_tail
+# from typing import Any, NamedTuple
 
 
 def dict_multi_get(obj:dict, keys:list, default_val=None):
@@ -32,12 +34,14 @@ class ChatBlockKey(Enum):
 
 
 # ChatBlockItem = namedtuple('ChatBlockItem', ['key', 'text', 'value'])
-class ChatBlockItem(NamedTuple):
-    key:ChatBlockKey
-    text:str
-    value:typing.Any
+class ChatBlockItem:
+    def __init__(self, key:ChatBlockKey, text:str, value=None, tokens:list=None) -> None:
+        self.key = key
+        self.text = text
+        self.value = value
+        self.tokens = tokens
 
-class ChatRoundData:
+class ChatMessage:
     Type_System = 'system'
     Type_Chat = 'chat'
 
@@ -51,7 +55,32 @@ class ChatRoundData:
             block.text
             for block in (self.block_list or [])
         ]
+    
+    def to_text(self):
+        return ''.join(self.get_text_list())
 
+class ChatDialog:
+    def __init__(self, context:list = None, chat:list=None) -> None:
+        self.context:typing.List[ChatMessage] = context or []
+        self.chat:typing.List[ChatMessage]  = chat or []
+    
+    def to_messages(self):
+        return self.context + self.chat
+    
+    def context_text(self):
+        return ''.join([
+            msg.to_text()
+            for msg in self.context
+        ])
+    
+    def chat_text(self, start:int=0, end:int=None):
+        return ''.join([
+            msg.to_text()
+            for msg in self.chat[start:end]
+        ])
+    
+    def to_text(self):
+        return self.context_text() + self.chat_text()
 
 class ChatTextEncoder:
     Default_Block_Tag_Map = {
@@ -95,10 +124,10 @@ class ChatTextEncoder:
             return str(value)
     
     def cast_block_key(self, key, default_val=None):
-        if key in self.Block_key_Alias_Map:
-            key = self.Block_key_Alias_Map[key]
         if isinstance(key, ChatBlockKey): 
             return key
+        if key in self.Block_key_Alias_Map:
+            key = self.Block_key_Alias_Map[key]
         return getattr(ChatBlockKey, key, default_val)
 
     def block_key2tag(self, key):
@@ -128,6 +157,21 @@ class ChatTextEncoder:
         if not only_val: _text += self.block_end(ChatBlockKey.plugins)
         return _text
     
+    def is_output_block_key(self, key):
+        """是否是输出类型的block key
+
+        Args:
+            key (ChatBlockKey|str): block key
+
+        Returns:
+            bool: true代表output类型的block key, false代表input类型
+        """
+        if not isinstance(key, ChatBlockKey): key = self.cast_block_key(key)
+        return key in (ChatBlockKey.call, ChatBlockKey.machine, ChatBlockKey.thought)
+    
+    def is_output_block(self, block:ChatBlockItem):
+        return self.is_output_block_key(block.key)
+    
     def parse_chat_obj(self, chat_obj:dict, reverse_chat:bool=False, no_system:bool=False):
         if not chat_obj:
             return []
@@ -142,11 +186,11 @@ class ChatTextEncoder:
                 block_text = self.block_encode(block_key, value)
                 block = ChatBlockItem(block_key, block_text, value)
                 system_block_list.append(block)
-            yield ChatRoundData(system_block_list, type=ChatRoundData.Type_System)
+            yield ChatMessage(system_block_list, type=ChatMessage.Type_System)
         
         chat_list = chat_obj.get('chat') or []
-        if reverse_chat: chat_list = reversed(chat_list)
-        round_size = list(chat_list)
+        if reverse_chat: chat_list = list(reversed(chat_list))
+        round_size = len(chat_list)
         for idx, chat_item in enumerate(chat_list):
             round_idx = round_size-idx-1 if reverse_chat else idx
             block_list = []
@@ -188,10 +232,32 @@ class ChatTextEncoder:
                         block_text = self.block_encode(block_key, value)
                         block = ChatBlockItem(block_key, block_text, value)
                         block_list.append(block)
-            yield ChatRoundData(block_list, round_idx=round_idx, type=ChatRoundData.Type_Chat)
+            yield ChatMessage(block_list, round_idx=round_idx, type=ChatMessage.Type_Chat)
 
     def predict_input(self, chat_obj):
-        pass
+        msg_iter = self.parse_chat_obj(chat_obj, reverse_chat=True)
+        context_list:typing.List[ChatMessage] = []
+        chat_list:typing.List[ChatMessage] = []
+        is_last_round = True
+        for msg in msg_iter:
+            if msg.type == ChatMessage.Type_System:
+                context_list.append(msg)
+                continue
+            if is_last_round:
+                input_block_list = items_remove_tail(msg.block_list, self.is_output_block)
+                message = ChatMessage(
+                    block_list=input_block_list,
+                    round_idx=msg.round_idx,
+                    type=msg.type
+                )
+                chat_list.insert(0, message)
+                is_last_round = False
+            else:
+                chat_list.insert(0, msg)
+        return ChatDialog(
+            context=context_list,
+            chat=chat_list
+        )
 
     def __input_output_idx_tuple_iter(self, is_output_iter):
         output_pos_begin = None
@@ -207,30 +273,109 @@ class ChatTextEncoder:
             yield output_pos_begin, i+1
 
     def train_data(self, chat_obj):
-        round_data_iter = self.parse_chat_obj(chat_obj)
-        prev_round_data_list:typing.List[ChatRoundData] = []
-        for round_data in round_data_iter:
-            if round_data.type == ChatRoundData.Type_System:
-                prev_round_data_list.append(round_data)
+        msg_iter = self.parse_chat_obj(chat_obj)
+        context_list:typing.List[ChatMessage] = []
+        prev_chat_list:typing.List[ChatMessage] = []
+        for msg in msg_iter:
+            if msg.type == ChatMessage.Type_System:
+                context_list.append(msg)
                 continue
             input_output_idx_tuple_iter = self.__input_output_idx_tuple_iter((
-                block.key in (ChatBlockKey.call, ChatBlockKey.machine, ChatBlockKey.thought)
-                for block in round_data.block_list
+                self.is_output_block_key(block.key)
+                for block in msg.block_list
             ))
             for input_idx, output_idx in input_output_idx_tuple_iter:
-                input_block_list = round_data.block_list[:input_idx]
-                output_block_list = round_data.block_list[input_idx:output_idx]
-                input_data = ChatRoundData(
+                input_block_list = msg.block_list[:input_idx]
+                output_block_list = msg.block_list[input_idx:output_idx]
+                last_msg = ChatMessage(
                     block_list=input_block_list, 
-                    round_idx=round_data.round_idx, 
-                    type=round_data.type)
-                output_data = ChatRoundData(
+                    round_idx=msg.round_idx, 
+                    type=msg.type)
+                output_msg = ChatMessage(
                     block_list=output_block_list, 
-                    round_idx=round_data.round_idx, 
-                    type=round_data.type)
-                yield [*prev_round_data_list, input_data], output_data
-            prev_round_data_list.append(round_data)
+                    round_idx=msg.round_idx, 
+                    type=msg.type)
+                input_dialog = ChatDialog(
+                    context=context_list,
+                    chat=[*prev_chat_list, last_msg]
+                )
+                yield input_dialog, output_msg
+            prev_chat_list.append(msg)
 
 
-def chat_input():
-    pass
+class ChatTokenizer:
+    def __init__(self, dialog:ChatDialog, tokenizer:PreTrainedTokenizerBase) -> None:
+        self.dialog = dialog
+        self.tokenizer = tokenizer
+
+    def get_context_tokens(self, max_context_tokens:int=None):
+        dialog, tokenizer = self.dialog, self.tokenizer
+        if not max_context_tokens:
+            text = dialog.context_text()
+            return tokenizer.encode(text)
+        context_tokens = []
+        for i, msg in enumerate(dialog.context):
+            for j, block in enumerate(msg.block_list):
+                if block.tokens is None:
+                    is_first_block = (i == 0) and (j == 0)
+                    text = block.text
+                    if text:
+                        tokens = tokenizer.encode(text, add_special_tokens=is_first_block)
+                    else:
+                        tokens = []
+                    block.tokens = tokens
+                if block.tokens:
+                    context_tokens.extend(block.tokens)
+                if max_context_tokens and len(context_tokens) >= max_context_tokens: break
+            if max_context_tokens and len(context_tokens) >= max_context_tokens: break
+        if max_context_tokens and len(context_tokens) > max_context_tokens:
+            context_tokens = context_tokens[:max_context_tokens]
+        elif not context_tokens:
+            # add bos_token_id if context is empty
+            context_tokens = tokenizer.encode('')
+        return context_tokens
+    
+    def get_chat_tokens(self, max_chat_tokens:int=None):
+        dialog, tokenizer = self.dialog, self.tokenizer
+        if not max_chat_tokens:
+            text = dialog.chat_text()
+            return tokenizer.encode(text, add_special_tokens=False)
+        r_chat_tokens = []
+        for msg in reversed(dialog.chat):
+            for block in reversed(msg.block_list):
+                if block.tokens is None:
+                    text = block.text
+                    if text:
+                        tokens = tokenizer.encode(text, add_special_tokens=False)
+                        block.tokens = tokens
+                if block.tokens:
+                    r_chat_tokens.extend(reversed(block.tokens))
+                if len(r_chat_tokens) >= max_chat_tokens: break
+            if len(r_chat_tokens) >= max_chat_tokens: break
+        
+        chat_tokens = list(reversed(r_chat_tokens[:max_chat_tokens]))
+        return chat_tokens
+    
+    def calc_max_chat_tokens(self, max_input_tokens:int=None, context_tokens_len:int=None):
+        if not max_input_tokens:
+            return None
+        if context_tokens_len:
+            return max_input_tokens - context_tokens_len
+
+    def truncate_tokens(self, max_input_tokens:int=None, max_context_tokens:int=None):
+        
+        dialog, tokenizer = self.dialog, self.tokenizer
+        if not max_input_tokens or max_input_tokens < 0:
+            return self.get_context_tokens(), self.get_chat_tokens()
+
+        if not max_context_tokens:
+            max_context_tokens = int(max_input_tokens / 2)
+        assert max_input_tokens >= max_context_tokens
+
+        context_tokens = self.get_context_tokens(max_context_tokens)
+        max_chat_tokens = self.calc_max_chat_tokens(
+            max_input_tokens=max_input_tokens,
+            context_tokens_len=len(context_tokens)
+        )
+        chat_tokens = self.get_chat_tokens(max_chat_tokens)
+        return context_tokens, chat_tokens
