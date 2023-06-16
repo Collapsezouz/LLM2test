@@ -131,8 +131,7 @@ class ChatTextEncoder:
         return '<!' + self.block_key2tag(key) + '>:\n'
     
     def block_end(self, key):
-        return '\3\n'
-        # return "\n"
+        return "\n"
         # return "<|eob|>\n"
     
     def block_encode(self, key, value):
@@ -299,6 +298,7 @@ class ChatTextEncoder:
     def parse_output(self, output_text):
         pass
 
+
 class ChatTokenizer:
     Default_Max_Context_Tokens_Ratio = 0.5
 
@@ -307,7 +307,7 @@ class ChatTokenizer:
         self.tokenizer = tokenizer
         self._default_max_context_tokens_ratio = self.Default_Max_Context_Tokens_Ratio
 
-    def get_context_tokens(self, max_context_tokens:int=None):
+    def get_context_tokens(self, max_context_tokens:int=None, add_bos_token:bool=True):
         dialog, tokenizer = self.dialog, self.tokenizer
         if not max_context_tokens:
             text = dialog.context_text()
@@ -319,7 +319,8 @@ class ChatTokenizer:
                     is_first_block = (i == 0) and (j == 0)
                     text = block.text
                     if text:
-                        tokens = tokenizer.encode(text, add_special_tokens=is_first_block)
+                        tokens = tokenizer.encode(
+                            text, add_special_tokens=(is_first_block and add_bos_token))
                     else:
                         tokens = []
                     block.tokens = tokens
@@ -334,12 +335,14 @@ class ChatTokenizer:
             context_tokens = tokenizer.encode('')
         return context_tokens
     
-    def get_chat_tokens(self, max_chat_tokens:int=None):
+    def get_chat_tokens(self, max_chat_tokens:int=None, add_eos_token:bool=False):
         dialog, tokenizer = self.dialog, self.tokenizer
         if not max_chat_tokens:
             text = dialog.chat_text()
             return tokenizer.encode(text, add_special_tokens=False)
-        r_chat_tokens = []
+        r_chat_tokens = [] # reversed chat tokens
+        if add_eos_token:
+            r_chat_tokens.insert(0, tokenizer.eos_token_id)
         for msg in reversed(dialog.chat):
             for block in reversed(msg.block_list):
                 if block.tokens is None:
@@ -361,7 +364,8 @@ class ChatTokenizer:
         if context_tokens_len:
             return max_input_tokens - context_tokens_len
 
-    def truncate_tokens(self, max_input_tokens:int=None, max_context_tokens:int=None):
+    def truncate_tokens(self, max_input_tokens:int=None, max_context_tokens:int=None
+                        , add_eos_token:bool=False, add_bos_token:bool=True):
         if not max_input_tokens or max_input_tokens < 0:
             return self.get_context_tokens(), self.get_chat_tokens()
 
@@ -369,10 +373,10 @@ class ChatTokenizer:
             max_context_tokens = int(max_input_tokens * self._default_max_context_tokens_ratio)
         assert max_input_tokens >= max_context_tokens
 
-        context_tokens = self.get_context_tokens(max_context_tokens)
+        context_tokens = self.get_context_tokens(max_context_tokens, add_bos_token=add_bos_token)
         max_chat_tokens = self.calc_max_chat_tokens(
             max_input_tokens=max_input_tokens,
             context_tokens_len=len(context_tokens)
         )
-        chat_tokens = self.get_chat_tokens(max_chat_tokens)
+        chat_tokens = self.get_chat_tokens(max_chat_tokens, add_eos_token=add_eos_token)
         return context_tokens, chat_tokens
