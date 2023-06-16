@@ -126,10 +126,10 @@ def preprocess(
     examples = [s + t for s, t in zip(sources, targets)]
     # examples=input+output, 结尾应有eos_token
     setattr(tokenizer, 'add_eos_token', True)
-    examples_tokenized = _tokenize_fn(examples, tokenizer, is_only_source=False)
+    examples_tokenized = _tokenize_fn(examples, tokenizer)
     # sources结尾应不包含eos_token
     setattr(tokenizer, 'add_eos_token', False)
-    sources_tokenized = _tokenize_fn(sources, tokenizer, is_only_source=True)
+    sources_tokenized = _tokenize_fn(sources, tokenizer)
     # examples_tokenized, sources_tokenized = [_tokenize_fn(strings, tokenizer) for strings in (examples, sources)]
     input_ids = examples_tokenized["input_ids"]
     labels = copy.deepcopy(input_ids)
