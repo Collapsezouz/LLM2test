@@ -1,0 +1,68 @@
+# smart_auto llm_model.service.hf_chat_generation_test test_tokenizer
+# smart_auto llm_model.service.hf_chat_generation_test test_tokenizer2
+# smart_auto llm_model.service.hf_chat_generation_test test_chat_tokenizer
+# smart_auto llm_model.service.hf_chat_generation_test test_generate
+### Debug
+# export DEBUG_PORT=5679
+# smart_auto_debug llm_model.service.hf_chat_generation test_generate
+import:
+- .hf_chat_generation
+
+tasks:
+  __load__:
+  - .service_test
+
+trees:
+  test_tokenizer:
+    __flow__:
+    - service_test.tokenize_sample
+    - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
+    - print.watch
+    - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model+test_tokenizer_decode)~@send
+    - print.watch$2
+
+  test_tokenizer2:
+    __flow__:
+    - service_test.tokenize_sample
+    - hf_tokenizer.init(hf_model)~encode(hf_model)~@send
+    - print.watch
+    - hf_tokenizer.init$2(hf_model)~decode(hf_model+test_tokenizer_decode)~@send
+    - print.watch$2
+
+  test_chat_tokenizer:
+    __flow__:
+    - service_test.plugin_sample
+    - hf_tokenizer.init(hf_model)~encode(hf_model)~@send
+    - print.watch
+    - hf_tokenizer.init$2(hf_model)~decode(hf_model+test_tokenizer_decode)~@send
+    - print.watch$2
+
+  test_generate:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+      join_mode: object
+    __flow__:
+    - service_test.instruct_sample
+    - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
+    - print.watch
+    - hf_chat_generation.load_model(test_hf_model)~generate(test_hf_model)
+    - print.watch$2
+    - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model)~@send
+    - print.watch$3
+  
+configs:
+  test_tokenizer_decode:
+    item_tokens_key: tokens
+  
+  test_hf_model:
+    model_name: "gpt2"
+    encode_opt: {}
+    decode_opt:
+      __extend__:
+      - ..encode_opt
+    max_tokens: 512
+    max_new_tokens: 20
+    # output_full_text: True
+    # pipeline_opt:
+    #   return_tensors: pt

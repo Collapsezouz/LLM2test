@@ -1,0 +1,87 @@
+# smart_auto llm_model.service.hf_chat_generation predict_service
+tasks:
+  __load__:
+  - auto_tasks.*.*
+  - .hf_chat_generation
+  - .hf_tokenizer
+  - .llm_redis_pip
+  
+trees:
+  predict_service:
+    __sibling__:
+      worker_num: 1
+      worker_mode: thread
+    __flow__:
+    - redis__pip.conn(redis_svr)~recv(pip_req)~@send
+    - print.watch
+    - cuda_tool.find_available_gpu(cuda_find_args)~@hf_chat_generation.load_model(hf_model)~@hf_chat_generation.generate(hf_model+predict_service)
+    # - redis__pip.conn$2(redis_svr)~send(pip_resp)
+    - print.watch$2
+    - llm_redis_pip.conn(redis_svr)~send_text(pip_resp)
+    cuda_tool.find_available_gpu:
+      worker_mode: process
+
+configs:
+  hf_model:
+    # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
+    model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
+    # model_name: "EleutherAI/pythia-70m"
+    model_kwargs:
+      # offload_folder: offload
+      # revision: step2000
+      device_map: auto
+    # encode_opt:
+    #   bos: True
+    #   eos: False
+    # decode_opt:
+    #   bos: True
+    #   eos: False
+    # max_tokens: 512
+    max_new_tokens: 200
+    # pipeline_opt:
+    #   return_tensors: pt
+    prompt_pattern:
+      input: "{input}\n- 输出:"
+      quote: "{input}\n\n- 输入:\n{quote}\n\n- 输出:"
+
+  predict_service:
+    input_text_key:
+    - ask
+    - question
+    input_quote_key: quote
+    streamer: text
+    
+  # predict_args:
+  #   max_input_len: 256
+  #   max_gen_len: 100
+  #   send_step: 10
+  #   # send_step: 1000
+  #   prepend_input: True
+
+  redis_svr:
+    host: 10.2.223.230
+    port: 6390
+    password: 58d326d7e5e6e8739f51ddbe25be049fa4f75f9f
+    db: 3
+    redis_kwargs:
+      socket_timeout: 90
+      socket_connect_timeout: 60
+      retry_on_timeout: 1
+    
+  pip_req:
+    key: cedb_model.ov_nlg.pred_req
+    redis_poll_interval: 30
+    is_daemon: 1
+  
+  pip_resp:
+    key: cedb_model.ov_nlg.pred_resp
+    item_send_key: _send_text
+    item_ttl: 86400
+    item_key: pred_text
+    # item_sub_key: pred_sub_text
+    # item_sub_end: pred_end
+
+  cuda_find_args:
+    gpu_num: 1
+    free_memory_ratio: 0.9
+    # shuffle: False
