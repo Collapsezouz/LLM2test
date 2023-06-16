@@ -14,7 +14,7 @@ trees:
       worker_mode: thread
       join_mode: object
     __flow__:
-    - service_test.test_sample
+    - service_test.instruct_sample
     - print.watch
     - redis__pip.conn(redis_svr)~send(pip_req+test_send_args)
     # redis__pip.conn$2(redis_svr)~@service_test.print_resp(pip_resp):

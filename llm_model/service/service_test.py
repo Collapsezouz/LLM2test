@@ -6,7 +6,7 @@ from redis import Redis
 
 @auto_load.task('llm_model.service_test')
 class HFServiceTestTask(TreeMultiTask):
-    def test_sample(self):
+    def instruct_sample(self):
         req_id = uuid.uuid1().hex
         self.send_data({
             'idx': 0,
@@ -28,6 +28,24 @@ class HFServiceTestTask(TreeMultiTask):
             # 'pred_opt': {
             #     'max_new_tokens': 10,
             # }
+        })
+
+    def tokenize_sample(self):
+        self.send_data({
+            'idx': 0,
+            'text': '你好',
+            'pred_opt': {
+                'max_new_tokens': 10,
+                'temperature': 1.2,
+                'top_p': 0.9
+            }
+        })
+        self.send_data({
+            'idx': 1,
+            'text': 'Hello world!',
+            'pred_opt': {
+                'max_new_tokens': 10,
+            }
         })
 
     def plugin_sample(self):

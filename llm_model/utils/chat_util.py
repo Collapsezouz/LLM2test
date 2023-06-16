@@ -304,9 +304,12 @@ class ChatTextEncoder:
 
 
 class ChatTokenizer:
+    Default_Max_Context_Tokens_Ratio = 0.5
+
     def __init__(self, dialog:ChatDialog, tokenizer:PreTrainedTokenizerBase) -> None:
         self.dialog = dialog
         self.tokenizer = tokenizer
+        self._default_max_context_tokens_ratio = self.Default_Max_Context_Tokens_Ratio
 
     def get_context_tokens(self, max_context_tokens:int=None):
         dialog, tokenizer = self.dialog, self.tokenizer
@@ -363,13 +366,11 @@ class ChatTokenizer:
             return max_input_tokens - context_tokens_len
 
     def truncate_tokens(self, max_input_tokens:int=None, max_context_tokens:int=None):
-        
-        dialog, tokenizer = self.dialog, self.tokenizer
         if not max_input_tokens or max_input_tokens < 0:
             return self.get_context_tokens(), self.get_chat_tokens()
 
         if not max_context_tokens:
-            max_context_tokens = int(max_input_tokens / 2)
+            max_context_tokens = int(max_input_tokens * self._default_max_context_tokens_ratio)
         assert max_input_tokens >= max_context_tokens
 
         context_tokens = self.get_context_tokens(max_context_tokens)

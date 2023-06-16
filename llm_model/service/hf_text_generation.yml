@@ -1,9 +1,4 @@
-# smart_auto llm_model.service.hf_text_generation test_tokenizer
-# smart_auto llm_model.service.hf_text_generation test_generate
 # smart_auto llm_model.service.hf_text_generation predict_service
-### Debug
-# export DEBUG_PORT=5679
-# smart_auto_debug llm_model.service.hf_text_generation test_generate
 tasks:
   __load__:
   - auto_tasks.*.*
@@ -14,7 +9,7 @@ tasks:
 trees:
   test_tokenizer:
     __flow__:
-    - hf_tokenizer.test_sample
+    - service_test.tokenize_sample
     - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
     - print.watch
     - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model+test_tokenizer_decode)~@send
@@ -22,7 +17,7 @@ trees:
 
   test_tokenizer2:
     __flow__:
-    - hf_tokenizer.test_sample
+    - service_test.tokenize_sample
     - hf_tokenizer.init(hf_model)~encode(hf_model)~@send
     - print.watch
     - hf_tokenizer.init$2(hf_model)~decode(hf_model+test_tokenizer_decode)~@send
@@ -34,7 +29,7 @@ trees:
       worker_mode: thread
       join_mode: object
     __flow__:
-    - hf_tokenizer.test_sample
+    - service_test.instruct_sample
     - hf_tokenizer.init(test_hf_model)~encode(test_hf_model)~@send
     - print.watch
     - hf_text_generation.load_model(test_hf_model)~generate(test_hf_model)

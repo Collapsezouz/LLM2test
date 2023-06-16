@@ -85,21 +85,3 @@ class HFTokenizerTask(HFModelTask):
     #         # 'item_iter': _out_item_iter_fn(),
     #         'item_iter_fn': _out_item_iter_fn
     #     }
-    
-    def test_sample(self):
-        self.send_data({
-            'idx': 0,
-            'text': '你好',
-            'pred_opt': {
-                'max_new_tokens': 10,
-                'temperature': 1.2,
-                'top_p': 0.9
-            }
-        })
-        self.send_data({
-            'idx': 1,
-            'text': 'Hello world!',
-            'pred_opt': {
-                'max_new_tokens': 10,
-            }
-        })
