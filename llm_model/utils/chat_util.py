@@ -4,16 +4,9 @@ from transformers import PreTrainedTokenizerBase
 from smart.utils.yaml import yaml_dumps
 from smart.utils.list import list_safe_iter
 # from collections import namedtuple
-from llm_model.utils.iter_util import items_remove_tail
+from llm_model.utils.obj_util import items_remove_tail, dict_multi_get
 # from typing import Any, NamedTuple
 
-
-def dict_multi_get(obj:dict, keys:list, default_val=None):
-    if not obj: return default_val
-    for key in list_safe_iter(keys):
-        if key in obj:
-            return obj[key]
-    return default_val
 
 
 class ChatBlockKey(Enum):
@@ -138,7 +131,8 @@ class ChatTextEncoder:
         return '<!' + self.block_key2tag(key) + '>:\n'
     
     def block_end(self, key):
-        return "\n"
+        return '\3\n'
+        # return "\n"
         # return "<|eob|>\n"
     
     def block_encode(self, key, value):
@@ -302,6 +296,8 @@ class ChatTextEncoder:
                 yield input_dialog, output_msg
             prev_chat_list.append(msg)
 
+    def parse_output(self, output_text):
+        pass
 
 class ChatTokenizer:
     Default_Max_Context_Tokens_Ratio = 0.5

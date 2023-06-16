@@ -37,8 +37,8 @@ from llm_model.alpaca.instruct_util import instruct_encode, instruct_train_datas
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
-DEFAULT_BOS_TOKEN = "</s>"
-DEFAULT_UNK_TOKEN = "</s>"
+DEFAULT_BOS_TOKEN = "<s>"
+DEFAULT_UNK_TOKEN = "<unk>"
 
 @dataclass
 class ModelArguments:
@@ -101,7 +101,7 @@ def _tokenize_fn(strings: Sequence[str], tokenizer: transformers.PreTrainedToken
             return_tensors="pt",
             padding="longest",
             max_length=tokenizer.model_max_length,
-            truncation=True,
+            truncation=True
         )
         for text in strings
     ]
@@ -124,7 +124,13 @@ def preprocess(
 ) -> Dict:
     """Preprocess the data by tokenizing."""
     examples = [s + t for s, t in zip(sources, targets)]
-    examples_tokenized, sources_tokenized = [_tokenize_fn(strings, tokenizer) for strings in (examples, sources)]
+    # examples=input+output, 结尾应有eos_token
+    setattr(tokenizer, 'add_eos_token', True)
+    examples_tokenized = _tokenize_fn(examples, tokenizer, is_only_source=False)
+    # sources结尾应不包含eos_token
+    setattr(tokenizer, 'add_eos_token', False)
+    sources_tokenized = _tokenize_fn(sources, tokenizer, is_only_source=True)
+    # examples_tokenized, sources_tokenized = [_tokenize_fn(strings, tokenizer) for strings in (examples, sources)]
     input_ids = examples_tokenized["input_ids"]
     labels = copy.deepcopy(input_ids)
     for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):

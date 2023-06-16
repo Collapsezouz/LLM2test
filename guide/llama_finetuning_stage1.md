@@ -150,9 +150,12 @@ cp -r ./logs/llm_stage1_3w_0406 /nas/tmp/phbsxgpt/
 ```
 export model_path=/home/app/tmp/llama/hf_7b
 export data_path=/nas/dataset/llm/phbs_llm/instruction_data_sample.jsonl
-export deepspeed_config=llm_model/configs/deepspeed_stage3.json
+export deepspeed_config=llm_model/configs/deepspeed.json
+export output_dir=./logs/ft_log/tmp_debug
 
 export DEBUG_PORT=5679
+
+export CUDA_VISIBLE_DEVICES=7
 
 deepspeed llm_model/alpaca/train_debug.py \
     --deepspeed $deepspeed_config \
@@ -175,6 +178,19 @@ deepspeed llm_model/alpaca/train_debug.py \
     --tf32 True \
     --model_max_length 512 \
     --gradient_checkpointing True
+```
+
+* debug dataset
+```
+export model_path=/home/app/tmp/llama/hf_7b
+export data_path=/nas/dataset/llm/phbs_llm/instruction_data_sample.jsonl
+export deepspeed_config=llm_model/configs/deepspeed.json
+export output_dir=./logs/ft_log/tmp_debug
+export DEBUG_PORT=5679
+
+> python -m llm_model.alpaca.dataset_debug \
+    --model_name_or_path $model_path \
+    --data_path $data_path
 ```
 
 

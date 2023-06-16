@@ -1,6 +1,6 @@
-# python3 -m tests.utils.iter_util remove_head
-# python3 -m tests.utils.iter_util remove_tail
-from llm_model.utils.iter_util import *
+# python3 -m tests.utils.obj_util remove_head
+# python3 -m tests.utils.obj_util remove_tail
+from llm_model.utils.obj_util import *
 from tests import logger
 
 
