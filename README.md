@@ -14,7 +14,7 @@
 
 
 # 运行服务
-
+* text generation服务
 ```
 > cd /home/app/expert-cpt
 > smart_auto llm_model.service.chatllama_zh.stage1_v1-1-1 predict_service > ./logs/llm_service_predict_v111.log 2>&1 &
@@ -24,7 +24,15 @@ ps -ef | grep smart_auto | grep 'llm_model.service'
 tail -f ./logs/llm_service_predict.log
 ```
 
+
+* chat generation服务
+```
+> cd /home/app/expert-cpt
+> smart_auto llm_model.service.hf_chat_generation predict_service> ./logs/chat_generation_v111.log 2>&1 &
+```
+
 * 停止服务: `ps -ef | grep smart_auto | grep 'llm_model.service' | awk '{print $2}' | xargs kill -9`
+
 
 
 # QA

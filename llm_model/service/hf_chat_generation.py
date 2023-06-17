@@ -4,7 +4,8 @@ from .hf_task import HFModelTask, auto_load, logger
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.generation.streamers import BaseStreamer
 from transformers import pipeline
-
+from llm_model.utils.chat_util import ChatTextEncoder
+from llm_model.utils.instruct_util import InstructUtil
 from smart.utils.dict import dict_find
 from . import utils
 
@@ -47,7 +48,8 @@ class HFChatGenerationTask(HFModelTask):
             'model': hf_model
         }
 
-    def generate(self, model=None, tokenizer=None, prompt_pattern=None, input_text_key='text', input_quote_key='quote', input_tokens_key='tokens', output_tokens_key='pred_tokens', output_text_key='pred_text',
+    def generate(self, model=None, tokenizer=None, dialog_key='dialog', instruct_opt={},
+                output_tokens_key='pred_tokens', output_text_key='pred_text',
                 max_tokens:int=None, max_new_tokens:int=None, output_full_text:bool=False, pipeline_opt:dict=None, streamer=None):
         pipeline_opt = pipeline_opt or {}
         generator = pipeline('text-generation', model=model, tokenizer=tokenizer, **pipeline_opt)
@@ -57,40 +59,37 @@ class HFChatGenerationTask(HFModelTask):
             generator_opt['streamer'] = TextStreamer(tokenizer)
 
         for i, item in enumerate(self.recv_data()):
-            input_tokens = item.get(input_tokens_key)
-            input_text = utils.item_get_by_multi_key(item, input_text_key)
-            input_quote = utils.item_get_by_multi_key(item, input_quote_key)
-            # input_text = item.get(input_text_key)
+            input_chat_obj = item.get(dialog_key)
             _max_new_tokens = dict_find(item, ('pred_opt', 'max_new_tokens'), default_val=max_new_tokens)
             _max_tokens = dict_find(item, ('pred_opt', 'max_tokens'), default_val=max_tokens)
+            chat_mode, input_text, input_tokens = False, None, None
+            # input_tokens = item.get(input_tokens_key)
+            if input_chat_obj:
+                chat_mode = True
+                chat_encoder = ChatTextEncoder()
+                chat_dialog = chat_encoder.predict_input(input_chat_obj)
+                input_text = chat_dialog.to_text()
+            else:
+                instruct_util = InstructUtil()
+                instruct_item = instruct_util.parse_instruct_obj(item, opt=instruct_opt)
+                input_text = instruct_util.encode(instruct_item, encode_opt=instruct_opt)
+
             _generator_opt = dict(generator_opt)
             _generator_opt.update(item.get('pred_opt') or {})
             if _max_new_tokens: _generator_opt['max_new_tokens'] = _max_new_tokens
             # if _max_tokens: _generator_opt['max_tokens'] = _max_tokens
             if not input_text:
-                logger.warning('hf_text_generation null item %s', item)
+                logger.warning('hf_chat_generation null item %s', item)
                 self.send_data(item)
                 continue
-            if prompt_pattern:
-                if input_quote:
-                    prompt_input = prompt_pattern.get('quote').format(
-                        input=input_text,
-                        quote=input_quote
-                    )
-                else:
-                    prompt_input = prompt_pattern.get('input').format(
-                        input=input_text
-                    )
-            else:
-                prompt_input = input_text
-            logger.debug('hf_text_generation %s input: %s', i, prompt_input)
-            pred_rst = generator(prompt_input, **_generator_opt)
-            logger.debug('hf_text_generation %s output: %s', i, pred_rst)
+            logger.debug('hf_chat_generation %s input: %s', i, input_text)
+            pred_rst = generator(input_text, **_generator_opt)
+            logger.debug('hf_chat_generation %s output: %s', i, pred_rst)
             output_tokens = dict_find(pred_rst, (0, 'generated_token_ids'))
             output_text = dict_find(pred_rst, (0, 'generated_text'))
             if output_text is not None:
-                if not output_full_text and prompt_input:
-                    output_text = output_text[len(prompt_input):]
+                if not output_full_text and input_text:
+                    output_text = output_text[len(input_text):]
                 item[output_text_key] = output_text
             else:
                 if not output_full_text and input_tokens:

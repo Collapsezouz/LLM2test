@@ -211,3 +211,13 @@ Api "odb/put_row" { // 保存行数据
                 'temperature': 0
             }
         })
+
+    def mock_queue_resp(self):
+        self.send_data({
+            'dialog': {
+                'system': 'You are helpful assistant.', 
+                'chat': [{'ask': '中国的首都'}]
+            }, 
+            '_send_queue': 'tmp.llm_model.service_test:0', 
+            'pred_text': '<.System:\n北京'
+        })

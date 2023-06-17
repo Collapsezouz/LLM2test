@@ -2,6 +2,7 @@
 # smart_auto llm_model.service.hf_chat_generation_test test_tokenizer2
 # smart_auto llm_model.service.hf_chat_generation_test test_chat_tokenizer
 # smart_auto llm_model.service.hf_chat_generation_test test_generate
+# smart_auto llm_model.service.hf_chat_generation_test test_send
 ### Debug
 # export DEBUG_PORT=5679
 # smart_auto_debug llm_model.service.hf_chat_generation test_generate
@@ -50,6 +51,12 @@ trees:
     - print.watch$2
     - hf_tokenizer.init$2(test_hf_model)~decode(test_hf_model)~@send
     - print.watch$3
+  
+  test_send:
+    __flow__:
+    - service_test.mock_queue_resp
+    - print.watch$2
+    - redis__pip.conn$2(redis_svr)~send(pip_resp)
   
 configs:
   test_tokenizer_decode:

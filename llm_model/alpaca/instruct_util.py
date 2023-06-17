@@ -1,10 +1,14 @@
-from llm_model.utils.instruct_util import instruct_encode
+from llm_model.utils.instruct_util import InstructUtil
+
+
+instruct_util = InstructUtil()
+instruct_encode = instruct_util.encode
 
 
 def instruct_train_dataset(instruct:dict, version=2):
     _ds = instruct.get('_ds')
     if _ds is None:
-        input_text = instruct_encode(instruct, version=version)
+        input_text = instruct_util.encode(instruct, version=version)
         output_text = instruct.get('output')
         yield input_text, output_text
         return

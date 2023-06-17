@@ -15,40 +15,42 @@ trees:
     - redis__pip.conn(redis_svr)~recv(pip_req)~@send
     - print.watch
     - cuda_tool.find_available_gpu(cuda_find_args)~@hf_chat_generation.load_model(hf_model)~@hf_chat_generation.generate(hf_model+predict_service)
-    # - redis__pip.conn$2(redis_svr)~send(pip_resp)
     - print.watch$2
-    - llm_redis_pip.conn(redis_svr)~send_text(pip_resp)
+    - redis__pip.conn$2(redis_svr)~send(pip_resp)
+    # - llm_redis_pip.conn(redis_svr)~send_text(pip_text_resp)
+    llm_redis_pip.conn(redis_svr)~send_text(pip_text_resp):
+      prev: cuda_tool.find_available_gpu
     cuda_tool.find_available_gpu:
       worker_mode: process
 
 configs:
   hf_model:
-    # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
-    model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
+    model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
+    # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
     # model_name: "EleutherAI/pythia-70m"
     model_kwargs:
       # offload_folder: offload
       # revision: step2000
       device_map: auto
-    # encode_opt:
-    #   bos: True
-    #   eos: False
-    # decode_opt:
-    #   bos: True
-    #   eos: False
     # max_tokens: 512
     max_new_tokens: 200
     # pipeline_opt:
     #   return_tensors: pt
-    prompt_pattern:
-      input: "{input}\n- 输出:"
-      quote: "{input}\n\n- 输入:\n{quote}\n\n- 输出:"
 
   predict_service:
-    input_text_key:
-    - ask
-    - question
-    input_quote_key: quote
+    dialog_key: dialog
+    instruct_opt:
+      version: 1
+      instruct_pattern: "{system}{instruction}\n- 输出:"
+      quote_pattern: "{system}{instruction}\n\n- 输入:\n{quote}\n\n- 输出:"
+      sub_keys: 
+      system_key: system
+      instruction_key: ['ask', 'question', 'user']
+      quote_key: quote
+    # input_text_key:
+    # - ask
+    # - question
+    # input_quote_key: quote
     streamer: text
     
   # predict_args:
@@ -75,6 +77,11 @@ configs:
   
   pip_resp:
     key: cedb_model.ov_nlg.pred_resp
+    item_queue_key: _send_queue
+    item_ttl: 86400
+  
+  pip_text_resp:
+    # key: cedb_model.ov_nlg.pred_resp
     item_send_key: _send_text
     item_ttl: 86400
     item_key: pred_text
