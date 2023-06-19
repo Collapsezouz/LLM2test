@@ -42,7 +42,8 @@ def test_train_data(model_path=None, max_input_tokens:int=2560, max_context_toke
             j += 1 # 模型第几次调用, 从1开始
             round_idx = output_msg.round_idx # 第几轮对话, 从0开始
             input_text = input_dialog.to_text()
-            output_text = output_msg.to_text()
+            # output_text = output_msg.to_text()
+            output_text = encoder.encode_output_msg(output_msg, fixed_block_struct=True)
             logger.info('\n---Model Input %s-%s---\n%s---Model Output---\n%s', round_idx, j, input_text, output_text)
             # encode input
             chat_tokenizer = ChatTokenizer(dialog=input_dialog, tokenizer=tokenizer)

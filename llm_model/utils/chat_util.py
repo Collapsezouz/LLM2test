@@ -104,7 +104,9 @@ class ChatTextEncoder:
         ]
     
     def _value_encode(self, value, format=None):
-        if isinstance(value, str):
+        if not value:
+            return ''
+        elif isinstance(value, str):
             return value
         
         if format == 'json':
@@ -142,6 +144,25 @@ class ChatTextEncoder:
         _text += self.block_end(key)
         return _text
     
+    def block_list_encode(self, block_list:typing.List[ChatBlockItem], merge_val:bool=True):
+        if not merge_val:
+            return ''.join((
+                self.block_encode(block.key, block.value)
+                for block in block_list
+            ))
+        else:
+            if not block_list:
+                return ''
+            prev_key = None
+            _text = ''
+            for block in block_list:
+                if block.key != prev_key:
+                    _text += self.block_prefix(block.key)
+                _text += self._value_encode(block.value)
+                _text += self.block_end(block.key)
+                prev_key = block.key
+            return _text
+    
     def encode_plugins(self, plugins, only_val=False):
         if plugins is None:
             return ''
@@ -167,7 +188,8 @@ class ChatTextEncoder:
     
     def parse_chat_obj(self, chat_obj:dict, reverse_chat:bool=False, no_system:bool=False):
         if not chat_obj:
-            return []
+            yield from []
+            return
         
         if not no_system:
             system_block_list = []
@@ -295,6 +317,32 @@ class ChatTextEncoder:
                 yield input_dialog, output_msg
             prev_chat_list.append(msg)
 
+    def encode_output_msg(self, output:ChatMessage, fixed_block_struct=True):
+        """output_msg转换成文本序列
+
+        Args:
+            output (ChatMessage): 模型输出
+            fixed_block_struct (bool, optional): 是否固定输出模版结构. Defaults to True.
+        """
+        if not output:
+            return ''
+        if not fixed_block_struct:
+            return output.to_text()
+        group_list = {}
+        for block in output.block_list:
+            if block.key not in group_list:
+                group_list[block.key] = []
+            group_list[block.key].append(block)
+        output_text = ''
+        for key in (ChatBlockKey.thought, ChatBlockKey.call, ChatBlockKey.machine):
+            block_list = group_list.get(key)
+            if block_list and len(block_list):
+                output_text += self.block_list_encode(block_list=block_list, merge_val=True)
+            else:
+                output_text += self.block_encode(key, '')
+        return output_text
+
+    
     def parse_output(self, output_text):
         pass
 
