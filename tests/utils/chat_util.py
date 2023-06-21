@@ -4,7 +4,7 @@
 # REMOTE_DEBUG=1 python -m tests.utils.chat_util predict_input
 import json
 from llm_model.utils.chat_util import *
-from tests.hf.tokenizer import get_tokenizer, test_config
+from tests.hf.test_model import get_tokenizer, test_config
 from tests import logger
 from ._mock_data import mock_chat_data
 

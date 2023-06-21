@@ -52,6 +52,7 @@ class InstructUtil:
             return self._encode_v2(item, encode_opt=encode_opt)
 
     def _encode_v1(self, instruct:InstructItem, encode_opt:dict=None):
+        encode_opt = encode_opt or {}
         quote_empty_vals = encode_opt.get('quote_empty_vals', ('<noinput>', '无', '空'))
         _quote = instruct.quote
         if _quote in quote_empty_vals: _quote = ''
@@ -59,7 +60,7 @@ class InstructUtil:
         _instruction = instruct.instruction or ''
         system_prompt = _system + "\n" if _system else ''
         if _quote:
-            pattern = (encode_opt or {}).get(
+            pattern = encode_opt.get(
                 'quote_pattern', "{system}{instruction}\n\n- 输入:\n{quote}\n\n- 输出:")
             return pattern.format(
                 system=system_prompt, 
@@ -67,7 +68,7 @@ class InstructUtil:
                 quote=_quote
             )
         else:
-            pattern = (encode_opt or {}).get(
+            pattern = encode_opt.get(
                 'instruct_pattern', "{system}{instruction}\n\n- 输出:")
             return pattern.format(
                 system=system_prompt,
@@ -75,6 +76,7 @@ class InstructUtil:
             )
 
     def _encode_v2(self, instruct:InstructItem, encode_opt:dict=None):
+        encode_opt = encode_opt or {}
         quote_empty_vals = encode_opt.get('quote_empty_vals', ('<noinput>', '无', '空'))
         _quote = instruct.quote
         if _quote in quote_empty_vals: _quote = ''

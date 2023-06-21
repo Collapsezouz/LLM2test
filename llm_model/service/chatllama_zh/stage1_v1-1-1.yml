@@ -4,8 +4,8 @@ import:
 
 configs:
   hf_model:
-    model_path: /nas/model/phbsxgpt/chatllama_zh_stage1_v1.1.1
-    # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
+    # model_path: /nas/model/phbsxgpt/chatllama_zh_stage1_v1.1.1
+    model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
     model_kwargs:
       # offload_folder: offload
       # revision: step2000

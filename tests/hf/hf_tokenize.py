@@ -2,7 +2,7 @@
 # python -m tests.hf.hf_tokenize gpt2
 # python -m tests.hf.hf_tokenize llama
 # from transformers import GPT2Tokenizer
-from .tokenizer import get_tokenizer
+from .test_model import get_tokenizer
 from . import test_config
 from tests import logger
 
