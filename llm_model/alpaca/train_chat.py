@@ -73,7 +73,8 @@ def instruct_train_chat_data(chat_data): #, max_input_tokens:int=2560, max_conte
         j += 1 # 模型第几次调用, 从1开始
         round_idx = output_msg.round_idx # 第几轮对话, 从0开始
         input_text = input_dialog.to_text()
-        output_text = output_msg.to_text()
+        # output_text = output_msg.to_text()
+        output_text = encoder.encode_output_msg(output_msg, fixed_block_struct=True)
         yield input_text, output_text
 
 

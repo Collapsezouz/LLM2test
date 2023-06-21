@@ -133,8 +133,8 @@ class ChatTextEncoder:
         return '<!' + self.block_key2tag(key) + '>:\n'
     
     def block_end(self, key):
-        return "\n"
-        # return "<|eob|>\n"
+        # return "\n"
+        return chr(29)+"\n"
     
     def block_encode(self, key, value):
         if key in ('plugins', ChatBlockKey.plugins):
