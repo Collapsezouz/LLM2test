@@ -60,10 +60,3 @@ import pymongo
 AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 ```
 解决方法: `pip install pyOpenSSL --upgrade`
-
-
-head -n 
-gpu5
-1.12.1
-
-/nas/dataset/llm/phbs_llm/ie_instuct
