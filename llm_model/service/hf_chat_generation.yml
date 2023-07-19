@@ -1,4 +1,5 @@
-# smart_auto llm_model.service.hf_chat_generation predict_service
+# 启动服务: smart_auto llm_model.service.hf_chat_generation predict_service > ./logs/chat_generation_v111.log 2>&1 &
+# 停止服务: ps -ef | grep smart_auto | grep 'service.hf_chat_generation' | awk '{print $2}' | xargs kill -9
 tasks:
   __load__:
   - auto_tasks.*.*
@@ -25,15 +26,17 @@ trees:
 
 configs:
   hf_model:
-    model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
+    # model_path: /nas/tmp/phbsxgpt/chatllama_zh_stage1_v1.1
     # model_path: /home/app/expert-cpt/logs/chatllama_zh_stage1_v1.1.1
+    # model_path: /home/app/expert-cpt/logs/llama_oa_v0.1
+    model_path: /nas/tmp/phbsxgpt/llama_oa_plugin_v1.3
     # model_name: "EleutherAI/pythia-70m"
     model_kwargs:
       # offload_folder: offload
       # revision: step2000
       device_map: auto
     # max_tokens: 512
-    max_new_tokens: 200
+    max_new_tokens: 1000
     # pipeline_opt:
     #   return_tensors: pt
 

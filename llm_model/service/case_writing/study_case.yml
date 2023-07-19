@@ -1,0 +1,31 @@
+# 启动服务: smart_auto llm_model.service.case_writing.study_case predict_service > ./logs/llm_service_predict.log 2>&1 &
+# 停止服务: ps -ef | grep smart_auto | grep 'llm_model.service' | awk '{print $2}' | xargs kill -9
+import:
+- ..hf_chat_generation
+
+configs:
+  hf_model:
+    # model_path: /nas/model/phbsxgpt/chatllama_zh_stage1_v1.1.1
+    model_path: /nas/model/phbsxgpt/case_writing/llama_study_case_v1.0
+    model_kwargs:
+      # offload_folder: offload
+      # revision: step2000
+      device_map: auto
+    # max_tokens: 512
+    max_new_tokens: 2000
+
+  predict_service:
+    dialog_key: dialog
+    instruct_opt:
+      version: 1
+      instruct_pattern: "{system}{instruction}\n- 输出:"
+      quote_pattern: "{system}{instruction}\n\n- 输入:\n{quote}\n\n- 输出:"
+      sub_keys: 
+      system_key: system
+      instruction_key: ['ask', 'question', 'user']
+      quote_key: quote
+    # input_text_key:
+    # - ask
+    # - question
+    # input_quote_key: quote
+    streamer: text
